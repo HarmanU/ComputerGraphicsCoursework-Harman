@@ -21,7 +21,7 @@ import org.newdawn.slick.opengl.Texture;
 import GraphicsLab.*;
 
 /**
- * TODO: Briefly describe your submission here
+ *  A spaceship orbiting a moon
  *
  * <p>Controls:
  * <ul>
@@ -29,6 +29,7 @@ import GraphicsLab.*;
  * <li>Hold the x, y and z keys to view the scene along the x, y and z axis, respectively
  * <li>While viewing the scene along the x, y or z axis, use the up and down cursor keys
  *      to increase or decrease the viewpoint's distance from the scene origin
+ * <li> Use 'W' to take off and fly and 'S' to land on the moon
  * </ul>
  * TODO: Add any additional controls for your sample to the list above
  *
@@ -64,6 +65,7 @@ public class CS2150Coursework extends GraphicsLab
 	
     private Texture moonTex;
     private Texture moonHeightTex;
+    private Texture shipTexture;
 	
 	
 	
@@ -78,6 +80,7 @@ public class CS2150Coursework extends GraphicsLab
     
     	moonTex = loadTexture("coursework/uppalhrs/textures/moon.bmp");
     	moonHeightTex = loadTexture("coursework/uppalhrs/textures/moonHeight.bmp");
+    	shipTexture = loadTexture("coursework/uppalhrs/textures/shipHull.png");
     	
     	System.out.print(shipRotationSpeed);
     	
@@ -171,6 +174,11 @@ public class CS2150Coursework extends GraphicsLab
             GL11.glMaterialf(GL11.GL_FRONT, GL11.GL_SHININESS, shipFrontShininess);
             GL11.glMaterial(GL11.GL_FRONT, GL11.GL_SPECULAR, FloatBuffer.wrap(shipFrontSpecular));
             GL11.glMaterial(GL11.GL_FRONT, GL11.GL_DIFFUSE, FloatBuffer.wrap(shipFrontDiffuse));
+            
+
+            // enable texturing and bind an appropriate texture
+            GL11.glEnable(GL11.GL_TEXTURE_2D);
+            GL11.glBindTexture(GL11.GL_TEXTURE_2D,shipTexture.getTextureID());
         	
             // position, scale and draw the ground plane using its display list
             GL11.glTranslatef(0f,0f, currentShipHeight);
@@ -180,6 +188,7 @@ public class CS2150Coursework extends GraphicsLab
             
             
             drawUnitSpaceship();
+            
         }
         GL11.glPopMatrix();
         
@@ -488,7 +497,8 @@ public class CS2150Coursework extends GraphicsLab
 		//Cockpit Front to top
 		GL11.glBegin(GL11.GL_POLYGON);
 		{
-			Colour.CYAN.submit();
+			new Normal(v9.toVector(),v10.toVector(),v28.toVector(),v27.toVector()).submit();
+			
 			v9.submit();
 			v10.submit();
 			v28.submit();
@@ -499,7 +509,8 @@ public class CS2150Coursework extends GraphicsLab
 		//Cockpit left
 		GL11.glBegin(GL11.GL_POLYGON);
 		{
-			Colour.YELLOW.submit();
+			new Normal(v29.toVector(),v9.toVector(),v27.toVector()).submit();
+			
 			v29.submit();
 			v9.submit();
 			v27.submit();
@@ -509,7 +520,8 @@ public class CS2150Coursework extends GraphicsLab
 		//Cockpit right
 		GL11.glBegin(GL11.GL_POLYGON);
 		{
-			Colour.YELLOW.submit();
+			new Normal(v10.toVector(),v30.toVector(),v28.toVector()).submit();
+			
 			v10.submit();
 			v30.submit();
 			v28.submit();
