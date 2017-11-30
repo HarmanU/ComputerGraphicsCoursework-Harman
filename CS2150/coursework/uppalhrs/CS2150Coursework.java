@@ -164,7 +164,7 @@ public class CS2150Coursework extends GraphicsLab
         	moveForwards = false;
         	moveBackwards = false;
         	moveLeft = false;
-        	moveRight = true;
+        	moveRight = false;
         	moveUp = true;
         	moveDown = false;
         	shipStop = false;
@@ -174,12 +174,12 @@ public class CS2150Coursework extends GraphicsLab
         	moveForwards = false;
         	moveBackwards = false;
         	moveLeft = false;
-        	moveRight = true;
+        	moveRight = false;
         	moveUp = false;
         	moveDown = true;
         	shipStop = false;
         }
-        else if(Keyboard.isKeyDown(Keyboard.KEY_E))
+        else if(Keyboard.isKeyDown(Keyboard.KEY_SPACE))
         {   
         	moveForwards = false;
         	moveBackwards = false;
@@ -202,7 +202,27 @@ public class CS2150Coursework extends GraphicsLab
         {   
         	shipPos.setX(shipPos.getX() - 1.0f * getAnimationScale());
         }
-
+        else if(moveBackwards && !shipStop)
+        {   
+        	shipPos.setX(shipPos.getX() + 1.0f * getAnimationScale());
+        }
+        else if(moveLeft && !shipStop)
+        {   
+        	shipPos.setZ(shipPos.getZ() + 1.0f * getAnimationScale());
+        }
+        else if(moveRight && !shipStop)
+        {   
+        	shipPos.setZ(shipPos.getZ() - 1.0f * getAnimationScale());
+        }
+        else if(moveUp && !shipStop)
+        {   
+        	shipPos.setY(shipPos.getY() + 1.0f * getAnimationScale());
+        }
+        else if(moveDown && !shipStop)
+        {   
+        	shipPos.setY(shipPos.getY() - 1.0f * getAnimationScale());
+        }
+        
         if(!landShip)
         {
         	currentMoonRotation += 5.0f * getAnimationScale();
