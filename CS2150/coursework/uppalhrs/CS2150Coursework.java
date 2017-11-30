@@ -57,11 +57,17 @@ public class CS2150Coursework extends GraphicsLab
 	private float currentShipHeight = shipFlyHeight;
 	private float shipLandHeight = 5.0f;
 	
+	private int shipX = 0;
+	private int shipY = 0;
+	
 	// Angle ship will fly at and rate at which it banks to land on moon
 	private float shipFlyAngle = -10.0f;
 	private float currentShipAngle = shipFlyAngle;
 	private float shipLandAngle = -90.f;
 	private float shipRotationSpeed = -(shipLandAngle - shipFlyAngle) / 2.0f;
+	
+	
+	private float timescale = 0f;
 	
     private Texture moonTex;
     private Texture moonHeightTex;
@@ -77,6 +83,8 @@ public class CS2150Coursework extends GraphicsLab
 
     protected void initScene() throws Exception
     {//TODO: Initialise your resources here - might well call other methods you write.
+    	
+    	//GL11.glViewport(shipX,shipY,1920,1080);
     
     	moonTex = loadTexture("coursework/uppalhrs/textures/moon.bmp");
     	moonHeightTex = loadTexture("coursework/uppalhrs/textures/moonHeight.bmp");
@@ -130,7 +138,9 @@ public class CS2150Coursework extends GraphicsLab
     	
     	
         if(!landShip && currentShipHeight < shipFlyHeight)
-        {   currentShipHeight += 1.0f * getAnimationScale();
+        {   
+        	currentShipHeight += 1.0f * getAnimationScale();
+        	
         }
         // else if the sun/moon is falling, and it isn't at its lowest,
         // then decrement the sun/moon's Y offset
@@ -181,7 +191,7 @@ public class CS2150Coursework extends GraphicsLab
             GL11.glBindTexture(GL11.GL_TEXTURE_2D,shipTexture.getTextureID());
         	
             // position, scale and draw the ground plane using its display list
-            GL11.glTranslatef(0f,0f, currentShipHeight);
+            GL11.glTranslatef(shipX,shipY, currentShipHeight);
             GL11.glRotatef(-90, 0, 1, 0);
             GL11.glRotatef(currentShipAngle, 0, 0, 1);
             GL11.glScalef(0.125f, 0.125f, 0.125f);
