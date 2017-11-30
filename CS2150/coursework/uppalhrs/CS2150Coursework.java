@@ -48,24 +48,28 @@ public class CS2150Coursework extends GraphicsLab
 	
 	// used to control animations
 	private boolean landShip = false;
-	private boolean moveShip = true;
+	
+	private boolean moveForwards = false;
+	private boolean moveBackwards = false;
+	private boolean moveLeft = false;
+	private boolean moveRight = false;
+	private boolean moveUp = false;
+	private boolean moveDown = false;
+	private boolean shipStop = true;
 	
 	private float currentMoonRotation = 0.0f;
 	
-	// height above moon ship will fly
-	private float shipFlyHeight = 8.0f;
-	private float currentShipHeight = shipFlyHeight;
-	private float shipLandHeight = 5.0f;
 	
-	// Angle ship will fly at and rate at which it banks to land on moon
-	private float shipFlyAngle = -10.0f;
-	private float currentShipAngle = shipFlyAngle;
-	private float shipLandAngle = -90.f;
-	private float shipRotationSpeed = -(shipLandAngle - shipFlyAngle) / 2.0f;
+	private Vector3 shipPos = new Vector3(20.0f, 0.0f, 15.0f);
 	
+	private float skyboxSize = 70.0f;
+	
+	// Textures
     private Texture moonTex;
-    private Texture moonHeightTex;
+    private Texture sunTex;
+    private Texture planet2Tex;
     private Texture shipTexture;
+    private Texture skyboxTex;
 	
 	
 	
@@ -79,13 +83,13 @@ public class CS2150Coursework extends GraphicsLab
     {//TODO: Initialise your resources here - might well call other methods you write.
     
     	moonTex = loadTexture("coursework/uppalhrs/textures/moon.bmp");
-    	moonHeightTex = loadTexture("coursework/uppalhrs/textures/moonHeight.bmp");
+    	sunTex = loadTexture("coursework/uppalhrs/textures/sun.jpg");
+    	planet2Tex = loadTexture("coursework/uppalhrs/textures/planet2.jpg");
     	shipTexture = loadTexture("coursework/uppalhrs/textures/shipHull.png");
-    	
-    	System.out.print(shipRotationSpeed);
+    	skyboxTex = loadTexture("coursework/uppalhrs/textures/skybox.jpg");
     	
     	// Global Ambient Light
-	    float globalAmbient[]   = {0.1f,  0.1f,  0.1f, 1.0f}; 
+	    float globalAmbient[]   = {0.2f,  0.2f,  0.2f, 1.0f}; 
 	    GL11.glLightModel(GL11.GL_LIGHT_MODEL_AMBIENT,FloatBuffer.wrap(globalAmbient));    // Set global ambient lighting
 	    
         // Sun light yellowish
@@ -93,7 +97,7 @@ public class CS2150Coursework extends GraphicsLab
         // ...with a very dim ambient contribution...
         float ambient0[]  = { 0.05f,  0.05f, 0.05f, 1.0f};
         // ...and is positioned to the left the viewpoint
-        float position0[] = { -30.0f, 0.0f, 0.0f, 1.0f};
+        float position0[] = { 0.0f, 0.0f, 0.0f, 1.0f};
 
         // supply OpenGL with the properties for the first light
         GL11.glLight(GL11.GL_LIGHT0, GL11.GL_AMBIENT, FloatBuffer.wrap(ambient0));
@@ -114,12 +118,77 @@ public class CS2150Coursework extends GraphicsLab
     protected void checkSceneInput()
     {//TODO: Check for keyboard and mouse input here
     	
-        if(Keyboard.isKeyDown(Keyboard.KEY_S))
-        {   landShip = true;
+        if(Keyboard.isKeyDown(Keyboard.KEY_W))
+        {   
+        	moveForwards = true;
+        	moveBackwards = false;
+        	moveLeft = false;
+        	moveRight = false;
+        	moveUp = false;
+        	moveDown = false;
+        	shipStop = false;
         }
-        else if(Keyboard.isKeyDown(Keyboard.KEY_W))
-        {   landShip = false;
+        else if(Keyboard.isKeyDown(Keyboard.KEY_S))
+        {   
+        	moveForwards = false;
+        	moveBackwards = true;
+        	moveLeft = false;
+        	moveRight = false;
+        	moveUp = false;
+        	moveDown = false;
+        	shipStop = false;
         }
+        else if(Keyboard.isKeyDown(Keyboard.KEY_A))
+        {   
+        	moveForwards = false;
+        	moveBackwards = false;
+        	moveLeft = true;
+        	moveRight = false;
+        	moveUp = false;
+        	moveDown = false;
+        	shipStop = false;
+        }  
+        else if(Keyboard.isKeyDown(Keyboard.KEY_D))
+        {   
+        	moveForwards = false;
+        	moveBackwards = false;
+        	moveLeft = false;
+        	moveRight = true;
+        	moveUp = false;
+        	moveDown = false;
+        	shipStop = false;
+        }
+        else if(Keyboard.isKeyDown(Keyboard.KEY_Q))
+        {   
+        	moveForwards = false;
+        	moveBackwards = false;
+        	moveLeft = false;
+        	moveRight = true;
+        	moveUp = true;
+        	moveDown = false;
+        	shipStop = false;
+        }
+        else if(Keyboard.isKeyDown(Keyboard.KEY_E))
+        {   
+        	moveForwards = false;
+        	moveBackwards = false;
+        	moveLeft = false;
+        	moveRight = true;
+        	moveUp = false;
+        	moveDown = true;
+        	shipStop = false;
+        }
+        else if(Keyboard.isKeyDown(Keyboard.KEY_E))
+        {   
+        	moveForwards = false;
+        	moveBackwards = false;
+        	moveLeft = false;
+        	moveRight = true;
+        	moveUp = false;
+        	moveDown = false;
+        	shipStop = true;
+        }
+        
         
     }
     protected void updateScene()
@@ -128,27 +197,11 @@ public class CS2150Coursework extends GraphicsLab
         //        (obtained via a call to getAnimationScale()) in your modifications so that your animations
         //        can be made faster or slower depending on the machine you are working on
     	
-    	
-        if(!landShip && currentShipHeight < shipFlyHeight)
-        {   currentShipHeight += 1.0f * getAnimationScale();
+        if(moveForwards && !shipStop)
+        {   
+        	shipPos.setX(shipPos.getX() - 1.0f * getAnimationScale());
         }
-        // else if the sun/moon is falling, and it isn't at its lowest,
-        // then decrement the sun/moon's Y offset
-        else if(landShip && currentShipHeight > shipLandHeight)
-        {   currentShipHeight -= 1.0f * getAnimationScale();
-        }
-        
-        if(!landShip && currentShipAngle < shipFlyAngle)
-        {
-        	currentShipAngle += shipRotationSpeed * getAnimationScale();
-        }
-        // else if the sun/moon is falling, and it isn't at its lowest,
-        // then decrement the sun/moon's Y offset
-        else if(landShip && currentShipAngle > shipLandAngle)
-        {
-        	currentShipAngle -= shipRotationSpeed * getAnimationScale();
-        }
-        
+
         if(!landShip)
         {
         	currentMoonRotation += 5.0f * getAnimationScale();
@@ -159,7 +212,147 @@ public class CS2150Coursework extends GraphicsLab
     {//TODO: Render your scene here - remember that a scene graph will help you write this method! 
      //      It will probably call a number of other methods you will write.
     	
-        // draw the space ship
+    	drawSkybox();
+    	
+    	drawSun();
+    	
+    	drawPlanet2();
+        
+        drawMoon();
+        
+        drawShip();
+    	
+    }
+    protected void setSceneCamera()
+    {
+        // call the default behaviour defined in GraphicsLab. This will set a default perspective projection
+        // and default camera settings ready for some custom camera positioning below...  
+        super.setSceneCamera();
+
+        //TODO: If it is appropriate for your scene, modify the camera's position and orientation here
+        //        using a call to GL11.gluLookAt(...)
+        
+        GLU.gluLookAt(shipPos.getX() + 5.0f, shipPos.getY() + 1.0f, shipPos.getZ(), shipPos.getX(), shipPos.getY(), shipPos.getZ(), 0f, 1f, 0f);
+   }
+
+    protected void cleanupScene()
+    {//TODO: Clean up your resources here
+    	
+    }
+    
+    protected void drawSkybox()
+    {
+    	// draw the Skybox
+        GL11.glPushMatrix();
+        {
+        	
+        	 // disable lighting calculations so that they don't affect
+            // the appearance of the texture 
+            GL11.glPushAttrib(GL11.GL_LIGHTING_BIT);
+            GL11.glDisable(GL11.GL_LIGHTING);
+            // change the geometry colour to white so that the texture
+            // is bright and details can be seen clearly
+            Colour.WHITE.submit();
+        	
+            // diffuse reflection of the front faces of the moon
+            float shipFrontDiffuse[]  = {1f, 1f, 1f, 1.0f};
+
+            GL11.glMaterial(GL11.GL_FRONT, GL11.GL_DIFFUSE, FloatBuffer.wrap(shipFrontDiffuse));
+            
+
+            // enable texturing and bind an appropriate texture
+            GL11.glEnable(GL11.GL_TEXTURE_2D);
+            GL11.glBindTexture(GL11.GL_TEXTURE_2D, skyboxTex.getTextureID());
+        	
+            // position, scale and draw the ground plane using its display list
+            GL11.glTranslatef(0.0f, 0.0f, 0.0f);            
+            
+            drawUnitSkybox();    
+            
+            // disable textures and reset any local lighting changes
+            GL11.glDisable(GL11.GL_TEXTURE_2D);
+            GL11.glPopAttrib();
+        }
+        GL11.glPopMatrix();
+    }
+    
+    protected void drawMoon()
+    {
+        // draw the moon
+        GL11.glPushMatrix();
+        {
+           float moonFrontShininess  = 2.0f;
+           float moonFrontSpecular[] = {0.6f, 0.6f, 0.6f, 1.0f};
+           float moonFrontDiffuse[]  = {0.6f, 0.6f, 0.6f, 1.0f};
+
+           // set the material properties for the moon
+           GL11.glMaterialf(GL11.GL_FRONT, GL11.GL_SHININESS, moonFrontShininess);
+           GL11.glMaterial(GL11.GL_FRONT, GL11.GL_SPECULAR, FloatBuffer.wrap(moonFrontSpecular));
+           GL11.glMaterial(GL11.GL_FRONT, GL11.GL_DIFFUSE, FloatBuffer.wrap(moonFrontDiffuse));
+
+           // Enable Textures
+           GL11.glEnable(GL11.GL_TEXTURE_2D);
+           GL11.glBindTexture(GL11.GL_TEXTURE_2D,moonTex.getTextureID());
+
+           // enable the texture space S,T
+           GL11.glEnable(GL11.GL_TEXTURE_GEN_S); 
+           GL11.glEnable(GL11.GL_TEXTURE_GEN_T);            
+           GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST);
+           GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST);
+           
+           // Set The Texture Generation Mode For S To Sphere Mapping 
+           GL11.glTexGeni(GL11.GL_S, GL11.GL_TEXTURE_GEN_MODE, GL11.GL_SPHERE_MAP);           
+           GL11.glTexGeni(GL11.GL_T, GL11.GL_TEXTURE_GEN_MODE, GL11.GL_SPHERE_MAP);
+                   	
+           // position and draw the moon using a sphere quadric object
+           GL11.glTranslatef(-60.0f, 0.0f, 0.0f);
+           new Sphere().draw(1.0f,50,50);
+        }
+        GL11.glPopMatrix();
+    }
+    
+    protected void drawSun()
+    {
+        // draw the Sun
+        GL11.glPushMatrix();
+        {
+           // diffuse reflection of the front faces of the sun
+           float sunDiffuse[]  = {0.6f, 0.6f, 0.6f, 1.0f};
+           
+           float sunEmmision[]  = { 0.8f,  0.7f, 0.4f, 1.0f };
+           float sunResetEmmision[]  = { 0.0f,  0.0f, 0.0f, 1.0f };
+
+           // set the material properties for the sun using OpenGL
+           GL11.glMaterial(GL11.GL_FRONT, GL11.GL_EMISSION, FloatBuffer.wrap(sunEmmision));
+           GL11.glMaterial(GL11.GL_FRONT, GL11.GL_DIFFUSE, FloatBuffer.wrap(sunDiffuse));
+
+           // Enable Textures
+           GL11.glEnable(GL11.GL_TEXTURE_2D);
+           GL11.glBindTexture(GL11.GL_TEXTURE_2D,sunTex.getTextureID());
+           GL11.glBindTexture(GL11.GL_TEXTURE_HEIGHT,sunTex.getTextureID());
+
+           // enable the texture space S,T
+           GL11.glEnable(GL11.GL_TEXTURE_GEN_S); 
+           GL11.glEnable(GL11.GL_TEXTURE_GEN_T);            
+           GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST);
+           GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST);
+           
+           // Set The Texture Generation Mode For S To Sphere Mapping 
+           GL11.glTexGeni(GL11.GL_S, GL11.GL_TEXTURE_GEN_MODE, GL11.GL_SPHERE_MAP);           
+           GL11.glTexGeni(GL11.GL_T, GL11.GL_TEXTURE_GEN_MODE, GL11.GL_SPHERE_MAP);
+                   	
+           // position and draw the moon using a sphere quadric object
+           GL11.glTranslatef(0f, 0f, 0f);
+           new Sphere().draw(10.0f,50,50);
+           GL11.glMaterial(GL11.GL_FRONT, GL11.GL_EMISSION, FloatBuffer.wrap(sunResetEmmision));
+           
+        }
+        GL11.glPopMatrix();
+    }
+    
+    protected void drawShip()
+    {
+    	// draw the space ship
         GL11.glPushMatrix();
         {
         	
@@ -181,9 +374,9 @@ public class CS2150Coursework extends GraphicsLab
             GL11.glBindTexture(GL11.GL_TEXTURE_2D,shipTexture.getTextureID());
         	
             // position, scale and draw the ground plane using its display list
-            GL11.glTranslatef(0f,0f, currentShipHeight);
+            GL11.glTranslatef(shipPos.getX(), shipPos.getY(), shipPos.getZ());
             GL11.glRotatef(-90, 0, 1, 0);
-            GL11.glRotatef(currentShipAngle, 0, 0, 1);
+            //GL11.glRotatef(currentShipAngle, 0, 0, 1);
             GL11.glScalef(0.125f, 0.125f, 0.125f);
             
             
@@ -191,26 +384,25 @@ public class CS2150Coursework extends GraphicsLab
             
         }
         GL11.glPopMatrix();
-        
+    }
+    
+    protected void drawPlanet2()
+    {
         // draw the moon
         GL11.glPushMatrix();
         {
-           // how shiny are the front faces of the moon (specular exponent)
-           float moonFrontShininess  = 2.0f;
-           // specular reflection of the front faces of the moon
-           float moonFrontSpecular[] = {0.6f, 0.6f, 0.6f, 1.0f};
-           // diffuse reflection of the front faces of the moon
-           float moonFrontDiffuse[]  = {0.6f, 0.6f, 0.6f, 1.0f};
+           float planet2FrontShininess  = 2.0f;
+           float planet2FrontSpecular[] = {0.6f, 0.6f, 0.6f, 1.0f};
+           float planet2FrontDiffuse[]  = {0.6f, 0.6f, 0.6f, 1.0f};
 
-           // set the material properties for the sun using OpenGL
-           GL11.glMaterialf(GL11.GL_FRONT, GL11.GL_SHININESS, moonFrontShininess);
-           GL11.glMaterial(GL11.GL_FRONT, GL11.GL_SPECULAR, FloatBuffer.wrap(moonFrontSpecular));
-           GL11.glMaterial(GL11.GL_FRONT, GL11.GL_DIFFUSE, FloatBuffer.wrap(moonFrontDiffuse));
+           // set the material properties for the planet
+           GL11.glMaterialf(GL11.GL_FRONT, GL11.GL_SHININESS, planet2FrontShininess);
+           GL11.glMaterial(GL11.GL_FRONT, GL11.GL_SPECULAR, FloatBuffer.wrap(planet2FrontSpecular));
+           GL11.glMaterial(GL11.GL_FRONT, GL11.GL_DIFFUSE, FloatBuffer.wrap(planet2FrontDiffuse));
 
            // Enable Textures
            GL11.glEnable(GL11.GL_TEXTURE_2D);
-           GL11.glBindTexture(GL11.GL_TEXTURE_2D,moonTex.getTextureID());
-           GL11.glBindTexture(GL11.GL_TEXTURE_HEIGHT,moonHeightTex.getTextureID());
+           GL11.glBindTexture(GL11.GL_TEXTURE_2D,planet2Tex.getTextureID());
 
            // enable the texture space S,T
            GL11.glEnable(GL11.GL_TEXTURE_GEN_S); 
@@ -223,27 +415,95 @@ public class CS2150Coursework extends GraphicsLab
            GL11.glTexGeni(GL11.GL_T, GL11.GL_TEXTURE_GEN_MODE, GL11.GL_SPHERE_MAP);
                    	
            // position and draw the moon using a sphere quadric object
-           GL11.glTranslatef(0f, 0f, 0f);
-           GL11.glRotatef(currentMoonRotation, 0, 1, 0);
+           GL11.glTranslatef(-50.0f, 0.0f, 0.0f);
            new Sphere().draw(5.0f,50,50);
         }
         GL11.glPopMatrix();
-    	
     }
-    protected void setSceneCamera()
+    
+    private void drawUnitSkybox()
     {
-        // call the default behaviour defined in GraphicsLab. This will set a default perspective projection
-        // and default camera settings ready for some custom camera positioning below...  
-        super.setSceneCamera();
+        // the vertices for the cube (note that all sides have a length of 1)
+        Vertex v1 = new Vertex(-skyboxSize, -skyboxSize,  skyboxSize);
+        Vertex v2 = new Vertex(-skyboxSize,  skyboxSize,  skyboxSize);
+        Vertex v3 = new Vertex( skyboxSize,  skyboxSize,  skyboxSize);
+        Vertex v4 = new Vertex( skyboxSize, -skyboxSize,  skyboxSize);
+        Vertex v5 = new Vertex(-skyboxSize, -skyboxSize, -skyboxSize);
+        Vertex v6 = new Vertex(-skyboxSize,  skyboxSize, -skyboxSize);
+        Vertex v7 = new Vertex( skyboxSize,  skyboxSize, -skyboxSize);
+        Vertex v8 = new Vertex( skyboxSize, -skyboxSize, -skyboxSize);
 
-        //TODO: If it is appropriate for your scene, modify the camera's position and orientation here
-        //        using a call to GL11.gluLookAt(...)
-        
-        GLU.gluLookAt(0.0f, 2.0f, 15.0f, 0f, 0f, 0f, 0f, 1f, 0f);
-   }
+        // draw the near face:
+        GL11.glBegin(GL11.GL_POLYGON);
+        {
+            new Normal(v4.toVector(),v1.toVector(),v2.toVector(),v3.toVector()).submit();
+            
+            v4.submit();
+            v1.submit();
+            v2.submit();
+            v3.submit();
+        }
+        GL11.glEnd();
 
-    protected void cleanupScene()
-    {//TODO: Clean up your resources here
+        // draw the left face:
+        GL11.glBegin(GL11.GL_POLYGON);
+        {
+            new Normal(v1.toVector(),v5.toVector(),v6.toVector(),v2.toVector()).submit();
+            
+            v1.submit();
+            v5.submit();
+            v6.submit();
+            v2.submit();
+        }
+        GL11.glEnd();
+
+        // draw the right face:
+        GL11.glBegin(GL11.GL_POLYGON);
+        {
+            new Normal(v8.toVector(),v4.toVector(),v3.toVector(),v7.toVector()).submit();
+            
+            v8.submit();
+            v4.submit();
+            v3.submit();
+            v7.submit();
+        }
+        GL11.glEnd();
+
+        // draw the top face:
+        GL11.glBegin(GL11.GL_POLYGON);
+        {
+            new Normal(v3.toVector(),v2.toVector(),v6.toVector(),v7.toVector()).submit();
+            
+            v3.submit();
+            v2.submit();
+            v6.submit();
+            v7.submit();
+        }
+        GL11.glEnd();
+
+        // draw the bottom face:
+        GL11.glBegin(GL11.GL_POLYGON);
+        {
+            new Normal(v8.toVector(),v5.toVector(),v1.toVector(),v4.toVector()).submit();
+            
+            v3.submit();
+            v5.submit();
+            v1.submit();
+            v4.submit();
+        }
+        GL11.glEnd();
+
+        // draw the far face:
+        GL11.glBegin(GL11.GL_POLYGON);
+        {
+            new Normal(v5.toVector(),v8.toVector(),v7.toVector(),v6.toVector()).submit();
+            
+            v5.submit();
+            v8.submit();
+            v7.submit();
+            v6.submit();
+        }
+        GL11.glEnd();
     }
     
     /** Draw a Spaceship **/
