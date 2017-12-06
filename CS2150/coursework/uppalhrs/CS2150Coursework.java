@@ -29,7 +29,9 @@ import GraphicsLab.*;
  * <li>Hold the x, y and z keys to view the scene along the x, y and z axis, respectively
  * <li>While viewing the scene along the x, y or z axis, use the up and down cursor keys
  *      to increase or decrease the viewpoint's distance from the scene origin
- * <li> Use 'W' to take off and fly and 'S' to land on the moon
+ * <li> Use 'W A S D' to move the ship forward, left backwards and right respectively
+ * <li> Use 'Q' and 'E' to go up and down respectively
+ * <li> Use 'G' and 'H' to rotate ship left and right respectively
  * </ul>
  * TODO: Add any additional controls for your sample to the list above
  *
@@ -56,10 +58,16 @@ public class CS2150Coursework extends GraphicsLab
 	private boolean moveUp = false;
 	private boolean moveDown = false;
 	private boolean shipStop = true;
+	private boolean rotateLeft = false;
+	private boolean rotateRight = false;
 	
 	private float currentMoonRotation = 0.0f;
 	
-	private Vector3 shipPos = new Vector3(20.0f, 0.0f, 15.0f);
+	private Vector3 shipPos = new Vector3(20.0f, 0.0f, 15.0f, 0.0f, 0.0f, 0.0f);
+	
+	private float cameraDistance = 5.0f;
+	
+	private Vector3 cameraPos = new Vector3(shipPos.getX() + cameraDistance, shipPos.getY() + 1.0f, shipPos.getZ(), shipPos.getX(), shipPos.getY(), shipPos.getZ());
 	
 	private float skyboxSize = 70.0f;
 	
@@ -179,12 +187,36 @@ public class CS2150Coursework extends GraphicsLab
         	moveDown = true;
         	shipStop = false;
         }
+        else if(Keyboard.isKeyDown(Keyboard.KEY_F))
+        {   
+        	moveForwards = false;
+        	moveBackwards = false;
+        	moveLeft = false;
+        	moveRight = false;
+        	moveUp = false;
+        	moveDown = false;
+        	rotateLeft = true;
+        	rotateRight = false;
+        	shipStop = false;
+        }
+        else if(Keyboard.isKeyDown(Keyboard.KEY_G))
+        {   
+        	moveForwards = false;
+        	moveBackwards = false;
+        	moveLeft = false;
+        	moveRight = false;
+        	moveUp = false;
+        	moveDown = false;
+        	rotateLeft = false;
+        	rotateRight = true;
+        	shipStop = false;
+        }
         else if(Keyboard.isKeyDown(Keyboard.KEY_SPACE))
         {   
         	moveForwards = false;
         	moveBackwards = false;
         	moveLeft = false;
-        	moveRight = true;
+        	moveRight = false;
         	moveUp = false;
         	moveDown = false;
         	shipStop = true;
@@ -222,11 +254,27 @@ public class CS2150Coursework extends GraphicsLab
         {   
         	shipPos.setY(shipPos.getY() - 1.0f * getAnimationScale());
         }
-        
-        if(!landShip)
-        {
-        	currentMoonRotation += 5.0f * getAnimationScale();
+        else if(rotateLeft && !shipStop)
+        {   
+        	shipPos.setRY(shipPos.getRY() + 5.0f * getAnimationScale());
+        	
         }
+        else if(rotateRight && !shipStop)
+        {   
+        	shipPos.setRY(shipPos.getRY() - 5.0f * getAnimationScale());
+        }
+        
+    	// ensures rotation is kept within 360 degrees
+    	if (shipPos.getRY() > 360.0f )
+    	{
+    		shipPos.setRY(0.0f);
+    	}
+    	else if (shipPos.getRY() < 0.0f)
+    	{
+    		shipPos.setRY(360.0f);
+    	}
+        
+        updateCameraPos();
         
     }
     protected void renderScene()
@@ -253,11 +301,74 @@ public class CS2150Coursework extends GraphicsLab
         //TODO: If it is appropriate for your scene, modify the camera's position and orientation here
         //        using a call to GL11.gluLookAt(...)
         
-        GLU.gluLookAt(shipPos.getX() + 5.0f, shipPos.getY() + 1.0f, shipPos.getZ(), shipPos.getX(), shipPos.getY(), shipPos.getZ(), 0f, 1f, 0f);
+        
+        
+        GLU.gluLookAt(cameraPos.getX(), cameraPos.getY(), cameraPos.getZ(), shipPos.getX(), shipPos.getY(), shipPos.getZ(), 0f, 1f, 0f);
+        
+        
    }
 
     protected void cleanupScene()
     {//TODO: Clean up your resources here
+    	
+    }
+    
+    protected void updateCameraPos()
+    {
+    	float shipX = shipPos.getX();
+    	float shipZ = shipPos.getZ();
+    	
+    	float shipR = shipPos.getRY();
+    	int times45 = (int) Math.floor((shipR / 45));
+    	
+    	float cameraNewX = 0.0f;
+    	float cameraNewZ = 0.0f;
+    	
+    	System.out.println(shipR);
+    	
+    	if (shipR >= 0 && shipR < 45)
+    	{
+        	cameraNewZ = (-(shipR / 45) * 3);
+        	cameraNewX = 3.0f;
+    	}
+    	else if (shipR > 45 && shipR < 90)
+    	{
+        	cameraNewZ = -3.0f;
+        	cameraNewX = (3 - ((shipR - (45 * times45)) / 45) * 3);
+    	}
+    	else if (shipR > 90 && shipR < 135)
+    	{
+        	cameraNewZ = -3.0f;
+        	cameraNewX = (- ((shipR - (45 * times45)) / 45) * 3);
+    	}
+    	else if (shipR > 135 && shipR < 180)
+    	{
+        	cameraNewZ = (-3 + ((shipR - (45 * times45)) / 45) * 3);
+        	cameraNewX = -3.0f;
+    	}
+    	else if (shipR > 180 && shipR < 225) // half-way
+    	{
+        	cameraNewZ = (+ ((shipR - (45 * times45)) / 45) * 3);
+        	cameraNewX = -3.0f;
+    	}
+    	else if (shipR > 225 && shipR < 270)
+    	{
+        	cameraNewZ = 3.0f;
+        	cameraNewX = (-3 + ((shipR - (45 * times45)) / 45) * 3);
+    	}
+    	else if (shipR > 270 && shipR < 315)
+    	{
+        	cameraNewZ = 3.0f;
+        	cameraNewX = (+ ((shipR - (45 * times45)) / 45) * 3);
+    	}
+    	else if (shipR > 315 && shipR < 360)
+    	{
+        	cameraNewZ = (3 -((shipR - (45 * times45)) / 45) * 3);
+        	cameraNewX = 3.0f;
+    	}
+    	
+    	cameraPos.setX((shipPos.getX() + cameraNewX ));
+    	cameraPos.setZ((shipPos.getZ() + cameraNewZ ));
     	
     }
     
@@ -286,7 +397,7 @@ public class CS2150Coursework extends GraphicsLab
             GL11.glBindTexture(GL11.GL_TEXTURE_2D, skyboxTex.getTextureID());
         	
             // position, scale and draw the ground plane using its display list
-            GL11.glTranslatef(0.0f, 0.0f, 0.0f);            
+            GL11.glTranslatef(shipPos.getX(), shipPos.getY(), shipPos.getZ());            
             
             drawUnitSkybox();    
             
@@ -396,7 +507,7 @@ public class CS2150Coursework extends GraphicsLab
         	
             // position, scale and draw the ground plane using its display list
             GL11.glTranslatef(shipPos.getX(), shipPos.getY(), shipPos.getZ());
-            GL11.glRotatef(-90, 0, 1, 0);
+            GL11.glRotatef(shipPos.getRY() + -90, 0, 1, 0);
             //GL11.glRotatef(currentShipAngle, 0, 0, 1);
             GL11.glScalef(0.125f, 0.125f, 0.125f);
             
@@ -443,85 +554,86 @@ public class CS2150Coursework extends GraphicsLab
     }
     
     private void drawUnitSkybox()
-    {
-        // the vertices for the cube (note that all sides have a length of 1)
-        Vertex v1 = new Vertex(-skyboxSize, -skyboxSize,  skyboxSize);
-        Vertex v2 = new Vertex(-skyboxSize,  skyboxSize,  skyboxSize);
-        Vertex v3 = new Vertex( skyboxSize,  skyboxSize,  skyboxSize);
-        Vertex v4 = new Vertex( skyboxSize, -skyboxSize,  skyboxSize);
-        Vertex v5 = new Vertex(-skyboxSize, -skyboxSize, -skyboxSize);
-        Vertex v6 = new Vertex(-skyboxSize,  skyboxSize, -skyboxSize);
-        Vertex v7 = new Vertex( skyboxSize,  skyboxSize, -skyboxSize);
-        Vertex v8 = new Vertex( skyboxSize, -skyboxSize, -skyboxSize);
+    {        
+    	// the vertices for the cube (note that all sides have a length of 1)
+        Vertex v1 = new Vertex( -skyboxSize, -skyboxSize,  skyboxSize);
+        Vertex v2 = new Vertex(  skyboxSize, -skyboxSize,  skyboxSize);
+        Vertex v3 = new Vertex(  skyboxSize,  skyboxSize,  skyboxSize);
+        Vertex v4 = new Vertex( -skyboxSize,  skyboxSize,  skyboxSize);
+        
+        Vertex v5 = new Vertex( -skyboxSize, -skyboxSize, -skyboxSize);
+        Vertex v6 = new Vertex(  skyboxSize, -skyboxSize, -skyboxSize);
+        Vertex v7 = new Vertex(  skyboxSize,  skyboxSize, -skyboxSize);
+        Vertex v8 = new Vertex( -skyboxSize,  skyboxSize, -skyboxSize);
 
         // draw the near face:
         GL11.glBegin(GL11.GL_POLYGON);
         {
-            new Normal(v4.toVector(),v1.toVector(),v2.toVector(),v3.toVector()).submit();
-            
+        	new Normal(v4.toVector(),v3.toVector(),v2.toVector(),v1.toVector()).submit();
+        	
             v4.submit();
-            v1.submit();
-            v2.submit();
             v3.submit();
+            v2.submit();
+            v1.submit();
         }
         GL11.glEnd();
 
         // draw the left face:
         GL11.glBegin(GL11.GL_POLYGON);
         {
-            new Normal(v1.toVector(),v5.toVector(),v6.toVector(),v2.toVector()).submit();
-            
+        	new Normal(v8.toVector(),v4.toVector(),v1.toVector(),v5.toVector()).submit();
+        	
+            v8.submit();
+            v4.submit();
             v1.submit();
             v5.submit();
-            v6.submit();
-            v2.submit();
         }
         GL11.glEnd();
 
         // draw the right face:
         GL11.glBegin(GL11.GL_POLYGON);
         {
-            new Normal(v8.toVector(),v4.toVector(),v3.toVector(),v7.toVector()).submit();
-            
-            v8.submit();
-            v4.submit();
+        	new Normal(v2.toVector(),v3.toVector(),v7.toVector(),v6.toVector()).submit();
+        	
+            v2.submit();
             v3.submit();
             v7.submit();
+            v6.submit();
         }
         GL11.glEnd();
 
         // draw the top face:
         GL11.glBegin(GL11.GL_POLYGON);
         {
-            new Normal(v3.toVector(),v2.toVector(),v6.toVector(),v7.toVector()).submit();
-            
-            v3.submit();
-            v2.submit();
-            v6.submit();
+        	new Normal(v8.toVector(),v7.toVector(),v3.toVector(),v4.toVector()).submit();
+        	
+            v8.submit();
             v7.submit();
+            v3.submit();
+            v4.submit();
         }
         GL11.glEnd();
 
         // draw the bottom face:
         GL11.glBegin(GL11.GL_POLYGON);
         {
-            new Normal(v8.toVector(),v5.toVector(),v1.toVector(),v4.toVector()).submit();
-            
-            v3.submit();
+        	new Normal(v6.toVector(),v5.toVector(),v1.toVector(),v2.toVector()).submit();
+        	
+            v6.submit();
             v5.submit();
             v1.submit();
-            v4.submit();
+            v2.submit();
         }
         GL11.glEnd();
 
         // draw the far face:
         GL11.glBegin(GL11.GL_POLYGON);
         {
-            new Normal(v5.toVector(),v8.toVector(),v7.toVector(),v6.toVector()).submit();
-            
-            v5.submit();
-            v8.submit();
+        	new Normal(v7.toVector(),v8.toVector(),v5.toVector(),v6.toVector()).submit();
+        	
             v7.submit();
+            v8.submit();
+            v5.submit();
             v6.submit();
         }
         GL11.glEnd();
