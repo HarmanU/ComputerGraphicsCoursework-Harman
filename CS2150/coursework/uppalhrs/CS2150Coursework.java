@@ -369,6 +369,7 @@ public class CS2150Coursework extends GraphicsLab
     	
     	cameraPos.setX((shipPos.getX() + cameraNewX ));
     	cameraPos.setZ((shipPos.getZ() + cameraNewZ ));
+    	cameraPos.setY(shipPos.getY() + 1.0f);
     	
     }
     
