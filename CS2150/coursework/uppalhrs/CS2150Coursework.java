@@ -17,6 +17,8 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.glu.GLU;
 import org.lwjgl.util.glu.Sphere;
 import org.lwjgl.input.Keyboard;
+import org.newdawn.slick.Font;
+import org.newdawn.slick.TrueTypeFont;
 import org.newdawn.slick.opengl.Texture;
 import GraphicsLab.*;
 
@@ -29,16 +31,17 @@ import GraphicsLab.*;
  * <li>Hold the x, y and z keys to view the scene along the x, y and z axis, respectively
  * <li>While viewing the scene along the x, y or z axis, use the up and down cursor keys
  *      to increase or decrease the viewpoint's distance from the scene origin
- * <li> Use 'W A S D' to move the ship forward, left backwards and right respectively
+ * <li> Use 'W D' to move the ship forward and backwards respectively
  * <li> Use 'Q' and 'E' to go up and down respectively
- * <li> Use 'G' and 'H' to rotate ship left and right respectively
+ * <li> Use 'A' and 'D' to rotate ship left and right respectively
+ * <li> Use 'Space' to stop the ship and 'R' to reset to default location
  * </ul>
- * TODO: Add any additional controls for your sample to the list above
  *
  */
 public class CS2150Coursework extends GraphicsLab
 {
-	
+	// ANIMATION PARAMETERS
+	// Ship parameters
 	private float wingThickness = 0.05f;
 	private float wingSpan = 7.0f;
 	private float hullThickness = 0.125f;
@@ -48,28 +51,34 @@ public class CS2150Coursework extends GraphicsLab
 	private final int spaceshipList = 1;
 	private final int moonList = 2;
 	
-	// used to control animations
-	private boolean landShip = false;
-	
-	private boolean moveForwards = false;
-	private boolean moveBackwards = false;
-	private boolean moveLeft = false;
-	private boolean moveRight = false;
-	private boolean moveUp = false;
-	private boolean moveDown = false;
-	private boolean shipStop = true;
-	private boolean rotateLeft = false;
-	private boolean rotateRight = false;
-	
-	private float currentMoonRotation = 0.0f;
-	
-	private Vector3 shipPos = new Vector3(20.0f, 0.0f, 15.0f, 0.0f, 0.0f, 0.0f);
-	
-	private float cameraDistance = 5.0f;
-	
-	private Vector3 cameraPos = new Vector3(shipPos.getX() + cameraDistance, shipPos.getY() + 1.0f, shipPos.getZ(), shipPos.getX(), shipPos.getY(), shipPos.getZ());
-	
 	private float skyboxSize = 70.0f;
+	
+	// ANIMATION
+	// Animation Control
+	public enum Direction {
+	    FORWARDS, BACKWARDS, YAWLEFT, YAWRIGHT,
+	    UP, DOWN, STOP
+	}
+	
+	Direction direction;
+	
+	// animation variables
+	private float currentSateliteRotation = 0.0f;
+	
+	//SHIP
+	// ships postion information
+	private Vector3 startingPos = new Vector3(20.0f, 0.0f, 15.0f, 0.0f, 0.0f, 0.0f);
+	private Vector3 shipPos = startingPos;
+	
+	
+	// CAMERA
+	// Distance camera is from ship
+	private float cameraDistance = 2.0f;
+	private float cameraHeight = 0.3f;
+	
+	// Camera position information
+	private Vector3 cameraPos = new Vector3(shipPos.getX() + cameraDistance, shipPos.getY() + cameraHeight, shipPos.getZ(), shipPos.getX(), shipPos.getY(), shipPos.getZ());
+	
 	
 	// Textures
     private Texture moonTex;
@@ -89,13 +98,13 @@ public class CS2150Coursework extends GraphicsLab
     protected void initScene() throws Exception
     {//TODO: Initialise your resources here - might well call other methods you write.
     	
-    	//GL11.glViewport(shipX,shipY,1920,1080);
+    	direction = Direction.STOP;
     
-    	moonTex = loadTexture("coursework/uppalhrs/textures/moon.bmp");
-    	sunTex = loadTexture("coursework/uppalhrs/textures/sun.jpg");
-    	planet2Tex = loadTexture("coursework/uppalhrs/textures/planet2.jpg");
+    	moonTex = loadTexture("coursework/uppalhrs/textures/moon.png");
+    	sunTex = loadTexture("coursework/uppalhrs/textures/sun.png");
+    	planet2Tex = loadTexture("coursework/uppalhrs/textures/earth.png");
     	shipTexture = loadTexture("coursework/uppalhrs/textures/shipHull.png");
-    	skyboxTex = loadTexture("coursework/uppalhrs/textures/skybox.jpg");
+    	skyboxTex = loadTexture("coursework/uppalhrs/textures/skybox.png");
     	
     	// Global Ambient Light
 	    float globalAmbient[]   = {0.2f,  0.2f,  0.2f, 1.0f}; 
@@ -129,97 +138,42 @@ public class CS2150Coursework extends GraphicsLab
     	
         if(Keyboard.isKeyDown(Keyboard.KEY_W))
         {   
-        	moveForwards = true;
-        	moveBackwards = false;
-        	moveLeft = false;
-        	moveRight = false;
-        	moveUp = false;
-        	moveDown = false;
-        	shipStop = false;
+        	direction = Direction.STOP;
+        	direction = Direction.FORWARDS;
         }
         else if(Keyboard.isKeyDown(Keyboard.KEY_S))
         {   
-        	moveForwards = false;
-        	moveBackwards = true;
-        	moveLeft = false;
-        	moveRight = false;
-        	moveUp = false;
-        	moveDown = false;
-        	shipStop = false;
+        	direction = Direction.STOP;
+        	direction = Direction.BACKWARDS;
         }
         else if(Keyboard.isKeyDown(Keyboard.KEY_A))
         {   
-        	moveForwards = false;
-        	moveBackwards = false;
-        	moveLeft = true;
-        	moveRight = false;
-        	moveUp = false;
-        	moveDown = false;
-        	shipStop = false;
+        	direction = Direction.STOP;
+        	direction = Direction.YAWLEFT;
         }  
         else if(Keyboard.isKeyDown(Keyboard.KEY_D))
         {   
-        	moveForwards = false;
-        	moveBackwards = false;
-        	moveLeft = false;
-        	moveRight = true;
-        	moveUp = false;
-        	moveDown = false;
-        	shipStop = false;
+        	direction = Direction.STOP;
+        	direction = Direction.YAWRIGHT;
         }
         else if(Keyboard.isKeyDown(Keyboard.KEY_Q))
         {   
-        	moveForwards = false;
-        	moveBackwards = false;
-        	moveLeft = false;
-        	moveRight = false;
-        	moveUp = true;
-        	moveDown = false;
-        	shipStop = false;
+        	direction = Direction.STOP;
+        	direction = Direction.UP;
         }
         else if(Keyboard.isKeyDown(Keyboard.KEY_E))
         {   
-        	moveForwards = false;
-        	moveBackwards = false;
-        	moveLeft = false;
-        	moveRight = false;
-        	moveUp = false;
-        	moveDown = true;
-        	shipStop = false;
-        }
-        else if(Keyboard.isKeyDown(Keyboard.KEY_F))
-        {   
-        	moveForwards = false;
-        	moveBackwards = false;
-        	moveLeft = false;
-        	moveRight = false;
-        	moveUp = false;
-        	moveDown = false;
-        	rotateLeft = true;
-        	rotateRight = false;
-        	shipStop = false;
-        }
-        else if(Keyboard.isKeyDown(Keyboard.KEY_G))
-        {   
-        	moveForwards = false;
-        	moveBackwards = false;
-        	moveLeft = false;
-        	moveRight = false;
-        	moveUp = false;
-        	moveDown = false;
-        	rotateLeft = false;
-        	rotateRight = true;
-        	shipStop = false;
+        	direction = Direction.STOP;
+        	direction = Direction.DOWN;
         }
         else if(Keyboard.isKeyDown(Keyboard.KEY_SPACE))
         {   
-        	moveForwards = false;
-        	moveBackwards = false;
-        	moveLeft = false;
-        	moveRight = false;
-        	moveUp = false;
-        	moveDown = false;
-        	shipStop = true;
+        	direction = Direction.STOP;
+        }
+        else if(Keyboard.isKeyDown(Keyboard.KEY_R))
+        {   
+        	shipPos = startingPos;
+        	direction = Direction.STOP;
         }
         
         
@@ -230,37 +184,33 @@ public class CS2150Coursework extends GraphicsLab
         //        (obtained via a call to getAnimationScale()) in your modifications so that your animations
         //        can be made faster or slower depending on the machine you are working on
     	
-        if(moveForwards && !shipStop)
-        {   
-        	shipPos.setX(shipPos.getX() - 1.0f * getAnimationScale());
+    	// move ship depending on what direction is selected
+        if(direction == Direction.FORWARDS)
+        {
+        	moveShip(1.0f);
         }
-        else if(moveBackwards && !shipStop)
+        else if(direction == Direction.BACKWARDS)
         {   
-        	shipPos.setX(shipPos.getX() + 1.0f * getAnimationScale());
+        	moveShip(-1.0f);
         }
-        else if(moveLeft && !shipStop)
+        else if(direction == Direction.UP)
         {   
-        	shipPos.setZ(shipPos.getZ() + 1.0f * getAnimationScale());
-        }
-        else if(moveRight && !shipStop)
-        {   
-        	shipPos.setZ(shipPos.getZ() - 1.0f * getAnimationScale());
-        }
-        else if(moveUp && !shipStop)
-        {   
+        	// Move ship in y-axis
         	shipPos.setY(shipPos.getY() + 1.0f * getAnimationScale());
         }
-        else if(moveDown && !shipStop)
+        else if(direction == Direction.DOWN)
         {   
+        	// Move ship in y-axis
         	shipPos.setY(shipPos.getY() - 1.0f * getAnimationScale());
         }
-        else if(rotateLeft && !shipStop)
+        else if(direction == Direction.YAWLEFT)
         {   
+        	// Rotate ship in y-axis
         	shipPos.setRY(shipPos.getRY() + 5.0f * getAnimationScale());
-        	
         }
-        else if(rotateRight && !shipStop)
+        else if(direction == Direction.YAWRIGHT)
         {   
+        	// Rotate ship in y-axis
         	shipPos.setRY(shipPos.getRY() - 5.0f * getAnimationScale());
         }
         
@@ -273,8 +223,10 @@ public class CS2150Coursework extends GraphicsLab
     	{
     		shipPos.setRY(360.0f);
     	}
-        
+    	
         updateCameraPos();
+        
+        currentSateliteRotation += 1.0f * getAnimationScale();
         
     }
     protected void renderScene()
@@ -283,25 +235,16 @@ public class CS2150Coursework extends GraphicsLab
     	
     	drawSkybox();
     	
-    	drawSun();
-    	
-    	drawPlanet2();
-        
-        drawMoon();
+    	drawSolarSystem();
         
         drawShip();
-    	
     }
     protected void setSceneCamera()
     {
         // call the default behaviour defined in GraphicsLab. This will set a default perspective projection
         // and default camera settings ready for some custom camera positioning below...  
         super.setSceneCamera();
-
-        //TODO: If it is appropriate for your scene, modify the camera's position and orientation here
-        //        using a call to GL11.gluLookAt(...)
-        
-        
+        //super.setViewingAxis(true);
         
         GLU.gluLookAt(cameraPos.getX(), cameraPos.getY(), cameraPos.getZ(), shipPos.getX(), shipPos.getY(), shipPos.getZ(), 0f, 1f, 0f);
         
@@ -313,13 +256,84 @@ public class CS2150Coursework extends GraphicsLab
     	
     }
     
-    protected void updateCameraPos()
+    /*
+     * Will move ship depending on which way it is facing
+     */
+    protected void moveShip(float shipMoveDistance)
     {
-    	float shipX = shipPos.getX();
-    	float shipZ = shipPos.getZ();
+    	/**
+    	 * 	   (45)	      (0' / 360')	(315)
+    	 * 					  |
+    	 * 					  |
+    	 * 					  |
+    	 * 	 Z (90') <--------+-------- (270')
+    	 * 					  |
+    	 * 					  |
+    	 * 					  V
+    	 * 					  X
+    	 * 	   (135) 	    (180')		(225)
+    	 */
     	
     	float shipR = shipPos.getRY();
-    	int times45 = (int) Math.floor((shipR / 45));
+    	
+    	int times45 = (int) Math.floor((shipR / 45)); // works out how many 45 go into current rotation
+    	
+    	float shipNewX = 0.0f;
+    	float shipNewZ = 0.0f;
+    	
+        // Determining ship's orientation in Y-axis
+    	if (shipR >= 0 && shipR < 45)
+    	{
+    		shipNewZ = ((shipR / 45) * shipMoveDistance);
+    		shipNewX = -shipMoveDistance;
+    	}
+    	else if (shipR > 45 && shipR < 90)
+    	{
+    		shipNewZ = shipMoveDistance;
+    		shipNewX = (-shipMoveDistance + ((shipR - (45 * times45)) / 45) * shipMoveDistance);
+    	}
+    	else if (shipR > 90 && shipR < 135)
+    	{
+    		shipNewZ = shipMoveDistance;
+    		shipNewX = (((shipR - (45 * times45)) / 45) * shipMoveDistance);
+    	}
+    	else if (shipR > 135 && shipR < 180)
+    	{
+    		shipNewZ = (shipMoveDistance - ((shipR - (45 * times45)) / 45) * shipMoveDistance);
+    		shipNewX = shipMoveDistance;
+    	}
+    	else if (shipR > 180 && shipR < 225) // half-way
+    	{
+    		shipNewZ = (-((shipR - (45 * times45)) / 45) * shipMoveDistance);
+    		shipNewX = shipMoveDistance;
+    	}
+    	else if (shipR > 225 && shipR < 270)
+    	{
+    		shipNewZ = -shipMoveDistance;
+    		shipNewX = (shipMoveDistance - ((shipR - (45 * times45)) / 45) * shipMoveDistance);
+    	}
+    	else if (shipR > 270 && shipR < 315)
+    	{
+    		shipNewZ = -shipMoveDistance;
+    		shipNewX = (- ((shipR - (45 * times45)) / 45) * shipMoveDistance);
+    	}
+    	else if (shipR > 315 && shipR < 360)
+    	{
+    		shipNewZ = (-shipMoveDistance  + ((shipR - (45 * times45)) / 45) * shipMoveDistance);
+    		shipNewX = -shipMoveDistance;
+    	}
+    	
+    	// Update ships X and Z axis
+    	shipPos.setX((shipPos.getX() + shipNewX * getAnimationScale() ));
+    	shipPos.setZ((shipPos.getZ() + shipNewZ * getAnimationScale() ));
+    }
+    
+    protected void updateCameraPos()
+    {
+    	
+    	float shipR = shipPos.getRY();
+    	
+    	int times45 = (int) Math.floor((shipR / 45)); // works out how many 45 go into current rotation
     	
     	float cameraNewX = 0.0f;
     	float cameraNewZ = 0.0f;
@@ -328,85 +342,93 @@ public class CS2150Coursework extends GraphicsLab
     	
     	if (shipR >= 0 && shipR < 45)
     	{
-        	cameraNewZ = (-(shipR / 45) * 3);
-        	cameraNewX = 3.0f;
+        	cameraNewZ = (-(shipR / 45) * cameraDistance);
+        	cameraNewX = cameraDistance;
     	}
     	else if (shipR > 45 && shipR < 90)
     	{
-        	cameraNewZ = -3.0f;
-        	cameraNewX = (3 - ((shipR - (45 * times45)) / 45) * 3);
+        	cameraNewZ = -cameraDistance;
+        	cameraNewX = (cameraDistance - ((shipR - (45 * times45)) / 45) * cameraDistance);
     	}
     	else if (shipR > 90 && shipR < 135)
     	{
-        	cameraNewZ = -3.0f;
-        	cameraNewX = (- ((shipR - (45 * times45)) / 45) * 3);
+        	cameraNewZ = -cameraDistance;
+        	cameraNewX = (- ((shipR - (45 * times45)) / 45) * cameraDistance);
     	}
     	else if (shipR > 135 && shipR < 180)
     	{
-        	cameraNewZ = (-3 + ((shipR - (45 * times45)) / 45) * 3);
-        	cameraNewX = -3.0f;
+        	cameraNewZ = (-cameraDistance + ((shipR - (45 * times45)) / 45) * cameraDistance);
+        	cameraNewX = -cameraDistance;
     	}
     	else if (shipR > 180 && shipR < 225) // half-way
     	{
-        	cameraNewZ = (+ ((shipR - (45 * times45)) / 45) * 3);
-        	cameraNewX = -3.0f;
+        	cameraNewZ = (+ ((shipR - (45 * times45)) / 45) * cameraDistance);
+        	cameraNewX = -cameraDistance;
     	}
     	else if (shipR > 225 && shipR < 270)
     	{
-        	cameraNewZ = 3.0f;
-        	cameraNewX = (-3 + ((shipR - (45 * times45)) / 45) * 3);
+        	cameraNewZ = cameraDistance;
+        	cameraNewX = (-cameraDistance + ((shipR - (45 * times45)) / 45) * cameraDistance);
     	}
     	else if (shipR > 270 && shipR < 315)
     	{
-        	cameraNewZ = 3.0f;
-        	cameraNewX = (+ ((shipR - (45 * times45)) / 45) * 3);
+        	cameraNewZ = cameraDistance;
+        	cameraNewX = (+ ((shipR - (45 * times45)) / 45) * cameraDistance);
     	}
     	else if (shipR > 315 && shipR < 360)
     	{
-        	cameraNewZ = (3 -((shipR - (45 * times45)) / 45) * 3);
-        	cameraNewX = 3.0f;
+        	cameraNewZ = (cameraDistance -((shipR - (45 * times45)) / 45) * cameraDistance);
+        	cameraNewX = cameraDistance;
     	}
     	
     	cameraPos.setX((shipPos.getX() + cameraNewX ));
     	cameraPos.setZ((shipPos.getZ() + cameraNewZ ));
-    	cameraPos.setY(shipPos.getY() + 1.0f);
+    	cameraPos.setY(shipPos.getY() + cameraHeight);
     	
     }
     
     protected void drawSkybox()
     {
-    	// draw the Skybox
-        GL11.glPushMatrix();
-        {
-        	
-        	 // disable lighting calculations so that they don't affect
+    	GL11.glPushMatrix();
+    	{
+    		
+       	 // disable lighting calculations so that they don't affect
             // the appearance of the texture 
             GL11.glPushAttrib(GL11.GL_LIGHTING_BIT);
             GL11.glDisable(GL11.GL_LIGHTING);
-            // change the geometry colour to white so that the texture
-            // is bright and details can be seen clearly
-            Colour.WHITE.submit();
-        	
-            // diffuse reflection of the front faces of the moon
-            float shipFrontDiffuse[]  = {1f, 1f, 1f, 1.0f};
-
-            GL11.glMaterial(GL11.GL_FRONT, GL11.GL_DIFFUSE, FloatBuffer.wrap(shipFrontDiffuse));
             
+            float skyBoxDiffuse[]  = {1.0f, 1.0f, 1.0f, 1.0f};
 
-            // enable texturing and bind an appropriate texture
+            // set the material properties for the moon
+            GL11.glMaterial(GL11.GL_FRONT, GL11.GL_DIFFUSE, FloatBuffer.wrap(skyBoxDiffuse));
+
+            // Enable Textures
             GL11.glEnable(GL11.GL_TEXTURE_2D);
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, skyboxTex.getTextureID());
-        	
-            // position, scale and draw the ground plane using its display list
-            GL11.glTranslatef(shipPos.getX(), shipPos.getY(), shipPos.getZ());            
+            GL11.glBindTexture(GL11.GL_TEXTURE_2D,skyboxTex.getTextureID());
             
-            drawUnitSkybox();    
+            Colour.WHITE.submit();
+
+            // enable the texture space S,T
+            GL11.glEnable(GL11.GL_TEXTURE_GEN_S); 
+            GL11.glEnable(GL11.GL_TEXTURE_GEN_T);            
+            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST);
+            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST);
             
+            // Set The Texture Generation Mode For S To Sphere Mapping 
+            GL11.glTexGeni(GL11.GL_S, GL11.GL_TEXTURE_GEN_MODE, GL11.GL_SPHERE_MAP);           
+            GL11.glTexGeni(GL11.GL_T, GL11.GL_TEXTURE_GEN_MODE, GL11.GL_SPHERE_MAP);
+    		
+            GL11.glTranslatef(shipPos.getX(), shipPos.getY(), shipPos.getZ());
+            
+    		Sphere skyboxTest = new Sphere();
+    		skyboxTest.setOrientation(GLU.GLU_INSIDE);
+    		skyboxTest.draw(skyboxSize, 50,50);
+    		
             // disable textures and reset any local lighting changes
             GL11.glDisable(GL11.GL_TEXTURE_2D);
             GL11.glPopAttrib();
-        }
-        GL11.glPopMatrix();
+    	}
+    	GL11.glPopMatrix();
     }
     
     protected void drawMoon()
@@ -438,13 +460,12 @@ public class CS2150Coursework extends GraphicsLab
            GL11.glTexGeni(GL11.GL_T, GL11.GL_TEXTURE_GEN_MODE, GL11.GL_SPHERE_MAP);
                    	
            // position and draw the moon using a sphere quadric object
-           GL11.glTranslatef(-60.0f, 0.0f, 0.0f);
-           new Sphere().draw(1.0f,50,50);
+           new Sphere().draw(0.25f,50,50);
         }
         GL11.glPopMatrix();
     }
     
-    protected void drawSun()
+    protected void drawSolarSystem()
     {
         // draw the Sun
         GL11.glPushMatrix();
@@ -476,8 +497,30 @@ public class CS2150Coursework extends GraphicsLab
                    	
            // position and draw the moon using a sphere quadric object
            GL11.glTranslatef(0f, 0f, 0f);
-           new Sphere().draw(10.0f,50,50);
+           new Sphere().draw(5.0f,50,50);
            GL11.glMaterial(GL11.GL_FRONT, GL11.GL_EMISSION, FloatBuffer.wrap(sunResetEmmision));
+           
+           // rotate the Earth around the Sun
+           GL11.glRotatef((360.0f*currentSateliteRotation/365.0f),0.0f,1.0f,0.0f);
+           // the Earth is 5 units from the Sun
+           GL11.glTranslatef(-20.0f,0.0f,0.0f);
+           // draw the Earth
+           drawEarth();
+           
+           // rotate the Moon around the Earth
+           GL11.glRotatef((360.0f*currentSateliteRotation*0.1f),0.0f,1.0f,0.0f);
+           // the Moon is .5 units from the Earth
+           GL11.glTranslatef(-5.0f,0.0f,0.0f);
+           // draw the moon
+           drawMoon();
+           
+           // rotate the Moon around the Earth
+           GL11.glRotatef((360.0f*currentSateliteRotation*0.2f),0.0f,1.0f,0.0f);
+           // the Moon is .5 units from the Earth
+           GL11.glTranslatef(-1.0f,0.0f,0.0f);
+           // draw a spaceship
+           GL11.glScalef(0.04f, 0.04f, 0.04f);
+           drawUnitSpaceship();
            
         }
         GL11.glPopMatrix();
@@ -510,7 +553,7 @@ public class CS2150Coursework extends GraphicsLab
             GL11.glTranslatef(shipPos.getX(), shipPos.getY(), shipPos.getZ());
             GL11.glRotatef(shipPos.getRY() + -90, 0, 1, 0);
             //GL11.glRotatef(currentShipAngle, 0, 0, 1);
-            GL11.glScalef(0.125f, 0.125f, 0.125f);
+            GL11.glScalef(0.0625f, 0.0625f, 0.0625f);
             
             
             drawUnitSpaceship();
@@ -519,9 +562,9 @@ public class CS2150Coursework extends GraphicsLab
         GL11.glPopMatrix();
     }
     
-    protected void drawPlanet2()
+    protected void drawEarth()
     {
-        // draw the moon
+        // draw the earth
         GL11.glPushMatrix();
         {
            float planet2FrontShininess  = 2.0f;
@@ -548,96 +591,9 @@ public class CS2150Coursework extends GraphicsLab
            GL11.glTexGeni(GL11.GL_T, GL11.GL_TEXTURE_GEN_MODE, GL11.GL_SPHERE_MAP);
                    	
            // position and draw the moon using a sphere quadric object
-           GL11.glTranslatef(-50.0f, 0.0f, 0.0f);
-           new Sphere().draw(5.0f,50,50);
+           new Sphere().draw(1.5f,50,50);
         }
         GL11.glPopMatrix();
-    }
-    
-    private void drawUnitSkybox()
-    {        
-    	// the vertices for the cube (note that all sides have a length of 1)
-        Vertex v1 = new Vertex( -skyboxSize, -skyboxSize,  skyboxSize);
-        Vertex v2 = new Vertex(  skyboxSize, -skyboxSize,  skyboxSize);
-        Vertex v3 = new Vertex(  skyboxSize,  skyboxSize,  skyboxSize);
-        Vertex v4 = new Vertex( -skyboxSize,  skyboxSize,  skyboxSize);
-        
-        Vertex v5 = new Vertex( -skyboxSize, -skyboxSize, -skyboxSize);
-        Vertex v6 = new Vertex(  skyboxSize, -skyboxSize, -skyboxSize);
-        Vertex v7 = new Vertex(  skyboxSize,  skyboxSize, -skyboxSize);
-        Vertex v8 = new Vertex( -skyboxSize,  skyboxSize, -skyboxSize);
-
-        // draw the near face:
-        GL11.glBegin(GL11.GL_POLYGON);
-        {
-        	new Normal(v4.toVector(),v3.toVector(),v2.toVector(),v1.toVector()).submit();
-        	
-            v4.submit();
-            v3.submit();
-            v2.submit();
-            v1.submit();
-        }
-        GL11.glEnd();
-
-        // draw the left face:
-        GL11.glBegin(GL11.GL_POLYGON);
-        {
-        	new Normal(v8.toVector(),v4.toVector(),v1.toVector(),v5.toVector()).submit();
-        	
-            v8.submit();
-            v4.submit();
-            v1.submit();
-            v5.submit();
-        }
-        GL11.glEnd();
-
-        // draw the right face:
-        GL11.glBegin(GL11.GL_POLYGON);
-        {
-        	new Normal(v2.toVector(),v3.toVector(),v7.toVector(),v6.toVector()).submit();
-        	
-            v2.submit();
-            v3.submit();
-            v7.submit();
-            v6.submit();
-        }
-        GL11.glEnd();
-
-        // draw the top face:
-        GL11.glBegin(GL11.GL_POLYGON);
-        {
-        	new Normal(v8.toVector(),v7.toVector(),v3.toVector(),v4.toVector()).submit();
-        	
-            v8.submit();
-            v7.submit();
-            v3.submit();
-            v4.submit();
-        }
-        GL11.glEnd();
-
-        // draw the bottom face:
-        GL11.glBegin(GL11.GL_POLYGON);
-        {
-        	new Normal(v6.toVector(),v5.toVector(),v1.toVector(),v2.toVector()).submit();
-        	
-            v6.submit();
-            v5.submit();
-            v1.submit();
-            v2.submit();
-        }
-        GL11.glEnd();
-
-        // draw the far face:
-        GL11.glBegin(GL11.GL_POLYGON);
-        {
-        	new Normal(v7.toVector(),v8.toVector(),v5.toVector(),v6.toVector()).submit();
-        	
-            v7.submit();
-            v8.submit();
-            v5.submit();
-            v6.submit();
-        }
-        GL11.glEnd();
     }
     
     /** Draw a Spaceship **/
