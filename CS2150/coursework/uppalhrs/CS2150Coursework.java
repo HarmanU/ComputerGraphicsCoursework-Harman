@@ -50,8 +50,8 @@ import GraphicsLab.*;
  * <li> Use 'W D' to move the ship forward and backwards respectively
  * <li> Use 'Q' and 'E' to go up and down respectively
  * <li> Use 'A' and 'D' to rotate ship left and right respectively
- * <li> Use 'F' and either '1' or '2' to a different movement speeds (1 for slow, 2 for fast)
- * <li> Use 'J' and either '1' or '2' to a different star system location
+ * <li> Hold 'F' and either '1' or '2' to a different movement speeds (1 for slow, 2 for fast)
+ * <li> Hold 'J' and either '1' or '2' to a different star system location
  * <li> Use 'Space' to stop the ship and 'R' to reset to default location
  * </ul>
  *
