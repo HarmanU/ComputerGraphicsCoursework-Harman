@@ -8,13 +8,15 @@
  * Scene Graph:
  *  Scene origin
  *  |
+ *  +-- [T(20,0,15)] Skybox 
+ *  |
  *  +-- [] Sun
  *  |   |
- *  |   +-- [T(5,0,0) Ry(360*currentSateliteRotation/365)] Earth
+ *  |   +-- [T(-20,0,0) Ry(360*currentSateliteRotation/365)] Earth
  *  |       |
- *  |       +-- [T(5,0,0) Ry(360*currentSateliteRotation*0.5)] Moon
+ *  |       +-- [T(-5,0,0) Ry(360*currentSateliteRotation*0.1)] Moon
  *  |			|
- *  |			+-- [T(5,0,0) Ry(360*currentSateliteRotation*0.5)] orbiting Spaceship
+ *  |			+-- [T(-1,0,0) Ry(360*currentSateliteRotation*0.2)] orbiting Spaceship
  *  |
  *  +-- [T(-180,0,0)] Sun 2
  *  |   |
@@ -22,7 +24,7 @@
  *  |	|
  *  |	+-- [T(-5,0,0) Ry(360*currentSateliteRotation/10)] Alien Planet
  *  |
- *  +-- [T(20,0,15) Ry(0,0,0) S(0.0625, 0.0625, 0.0625)] Spaceship
+ *  +-- [T(20,0,15) Ry(-90,0,0) S(0.0625, 0.0625, 0.0625)] Spaceship
  *  
  *  TODO: Provide a scene graph for your submission
  */
@@ -124,6 +126,7 @@ public class CS2150Coursework extends GraphicsLab
     protected void initScene() throws Exception
     {//TODO: Initialise your resources here - might well call other methods you write.
     	
+    	// ensure ship is not moving
     	direction = Direction.STOP;
     
     	moonTex = loadTexture("coursework/uppalhrs/textures/moon.png");
@@ -164,6 +167,7 @@ public class CS2150Coursework extends GraphicsLab
     protected void checkSceneInput()
     {//TODO: Check for keyboard and mouse input here
     	
+    	// Set direction value depending on which key is pressed
         if(Keyboard.isKeyDown(Keyboard.KEY_W))
         {   
         	direction = Direction.STOP;
@@ -193,7 +197,7 @@ public class CS2150Coursework extends GraphicsLab
         {   
         	direction = Direction.STOP;
         	direction = Direction.DOWN;
-        }
+        }   
         // Speed controls
         else if(Keyboard.isKeyDown(Keyboard.KEY_F) && Keyboard.isKeyDown(Keyboard.KEY_1))
         {   
@@ -203,15 +207,18 @@ public class CS2150Coursework extends GraphicsLab
         {   
         	shipSpeed = shipSpeedFast;
         }
+        // Stop ship
         else if(Keyboard.isKeyDown(Keyboard.KEY_SPACE))
         {   
         	direction = Direction.STOP;
         }
+        // Reset position
         else if(Keyboard.isKeyDown(Keyboard.KEY_R))
         {   
         	shipPos.resetPosition();
         	direction = Direction.STOP;
         }
+        // Jump drive controls
         else if(Keyboard.isKeyDown(Keyboard.KEY_J) && Keyboard.isKeyDown(Keyboard.KEY_1) && !inSystem1)
         {   
         	shipPos.setY(0.0f);
@@ -302,6 +309,7 @@ public class CS2150Coursework extends GraphicsLab
         super.setSceneCamera();
         //super.setViewingAxis(true);
         
+        // set position and look at ship
         GLU.gluLookAt(cameraPos.getX(), cameraPos.getY(), cameraPos.getZ(), shipPos.getX(), shipPos.getY(), shipPos.getZ(), 0f, 1f, 0f);
         
         
@@ -340,7 +348,7 @@ public class CS2150Coursework extends GraphicsLab
     	float shipNewX = 0.0f;
     	float shipNewZ = 0.0f;
     	
-        // Determining ship's orientation in Y-axis
+        // Determining ship's orientation in Y-axis and move it depending on its Y rotation
     	if (shipR >= 0 && shipR < 45)
     	{
     		shipNewZ = ((shipR / 45) * shipMoveDistance);
@@ -382,7 +390,7 @@ public class CS2150Coursework extends GraphicsLab
     		shipNewX = -shipMoveDistance;
     	}
     	
-    	// Update ships X and Z axis
+    	// Update ships X and Z axis (Move ship)
     	shipPos.setX((shipPos.getX() + shipNewX * getAnimationScale() ));
     	shipPos.setZ((shipPos.getZ() + shipNewZ * getAnimationScale() ));
     }
@@ -401,8 +409,6 @@ public class CS2150Coursework extends GraphicsLab
     	
     	float cameraNewX = 0.0f;
     	float cameraNewZ = 0.0f;
-    	
-    	System.out.println(shipR);
     	
     	if (shipR >= 0 && shipR < 45)
     	{
@@ -445,12 +451,16 @@ public class CS2150Coursework extends GraphicsLab
         	cameraNewX = cameraDistance;
     	}
     	
+    	// Update camera position
     	cameraPos.setX((shipPos.getX() + cameraNewX ));
     	cameraPos.setZ((shipPos.getZ() + cameraNewZ ));
     	cameraPos.setY(shipPos.getY() + cameraHeight);
     	
     }
     
+    /**
+     * Draw a skybox sphere
+     */
     protected void drawSkybox()
     {
     	GL11.glPushMatrix();
@@ -484,8 +494,11 @@ public class CS2150Coursework extends GraphicsLab
     		
             GL11.glTranslatef(shipPos.getX(), shipPos.getY(), shipPos.getZ());
             
+            // create a new sphere
     		Sphere skyboxTest = new Sphere();
+    		// set the rendering face to the inside of the sphere
     		skyboxTest.setOrientation(GLU.GLU_INSIDE);
+    		// Draw the sphere
     		skyboxTest.draw(skyboxSize, 50,50);
     		
             // disable textures and reset any local lighting changes
@@ -500,14 +513,14 @@ public class CS2150Coursework extends GraphicsLab
         // draw the moon
         GL11.glPushMatrix();
         {
-           float moonFrontShininess  = 2.0f;
-           float moonFrontSpecular[] = {0.6f, 0.6f, 0.6f, 1.0f};
-           float moonFrontDiffuse[]  = {0.6f, 0.6f, 0.6f, 1.0f};
+           float moonShininess  = 2.0f;
+           float moonSpecular[] = {0.6f, 0.6f, 0.6f, 1.0f};
+           float moonDiffuse[]  = {0.6f, 0.6f, 0.6f, 1.0f};
 
            // set the material properties for the moon
-           GL11.glMaterialf(GL11.GL_FRONT, GL11.GL_SHININESS, moonFrontShininess);
-           GL11.glMaterial(GL11.GL_FRONT, GL11.GL_SPECULAR, FloatBuffer.wrap(moonFrontSpecular));
-           GL11.glMaterial(GL11.GL_FRONT, GL11.GL_DIFFUSE, FloatBuffer.wrap(moonFrontDiffuse));
+           GL11.glMaterialf(GL11.GL_FRONT, GL11.GL_SHININESS, moonShininess);
+           GL11.glMaterial(GL11.GL_FRONT, GL11.GL_SPECULAR, FloatBuffer.wrap(moonSpecular));
+           GL11.glMaterial(GL11.GL_FRONT, GL11.GL_DIFFUSE, FloatBuffer.wrap(moonDiffuse));
 
            // Enable Textures
            GL11.glEnable(GL11.GL_TEXTURE_2D);
@@ -523,7 +536,7 @@ public class CS2150Coursework extends GraphicsLab
            GL11.glTexGeni(GL11.GL_S, GL11.GL_TEXTURE_GEN_MODE, GL11.GL_SPHERE_MAP);           
            GL11.glTexGeni(GL11.GL_T, GL11.GL_TEXTURE_GEN_MODE, GL11.GL_SPHERE_MAP);
                    	
-           // position and draw the moon using a sphere quadric object
+           // position and draw the moon
            new Sphere().draw(0.25f,50,50);
         }
         GL11.glPopMatrix();
@@ -537,6 +550,7 @@ public class CS2150Coursework extends GraphicsLab
            // diffuse reflection of faces of the sun
            float sunDiffuse[]  = {0.6f, 0.6f, 0.6f, 1.0f};
            
+           // Sun emmision value
            float sunEmmision[]  = { 0.8f,  0.7f, 0.4f, 1.0f };
            float sunResetEmmision[]  = { 0.0f,  0.0f, 0.0f, 1.0f };
 
@@ -559,14 +573,14 @@ public class CS2150Coursework extends GraphicsLab
            GL11.glTexGeni(GL11.GL_S, GL11.GL_TEXTURE_GEN_MODE, GL11.GL_SPHERE_MAP);           
            GL11.glTexGeni(GL11.GL_T, GL11.GL_TEXTURE_GEN_MODE, GL11.GL_SPHERE_MAP);
                    	
-           // position and draw the moon using a sphere quadric object
+           // position and draw the sun
            GL11.glTranslatef(0f, 0f, 0f);
            new Sphere().draw(5.0f,50,50);
            GL11.glMaterial(GL11.GL_FRONT, GL11.GL_EMISSION, FloatBuffer.wrap(sunResetEmmision));
            
            // rotate the Earth around the Sun
            GL11.glRotatef((360.0f*currentSateliteRotation/365.0f),0.0f,1.0f,0.0f);
-           // the Earth is 5 units from the Sun
+           // the Earth is -20 units from the Sun
            GL11.glTranslatef(-20.0f,0.0f,0.0f);
            // draw the Earth
            drawEarth();
@@ -578,12 +592,13 @@ public class CS2150Coursework extends GraphicsLab
            // draw the moon
            drawMoon();
            
-           // rotate the Moon around the Earth
+           // rotate the ship around the moon
            GL11.glRotatef((360.0f*currentSateliteRotation*0.2f),0.0f,1.0f,0.0f);
-           // the Moon is .5 units from the Earth
+           // the Moon is -1 units from the Earth
            GL11.glTranslatef(-1.0f,0.0f,0.0f);
-           // draw a spaceship
+           // scale the spaceship
            GL11.glScalef(0.04f, 0.04f, 0.04f);
+           // draw a spaceship
            drawUnitSpaceship();
            
         }
@@ -651,35 +666,36 @@ public class CS2150Coursework extends GraphicsLab
     	GL11.glPopMatrix();
     }
     
+    /**
+     * Draw a spaceship
+     */
     protected void drawShip()
     {
     	// draw the space ship
         GL11.glPushMatrix();
         {
         	
-            // how shiny are the front faces of the moon (specular exponent)
-            float shipFrontShininess  = 5.0f;
+            // ship specular
+            float shipShininess  = 10.0f;
             // specular reflection of the front faces of the moon
-            float shipFrontSpecular[] = {0.6f, 0.6f, 0.6f, 1.0f};
+            float shipSpecular[] = {0.6f, 0.6f, 0.6f, 1.0f};
             // diffuse reflection of the front faces of the moon
-            float shipFrontDiffuse[]  = {0.6f, 0.6f, 0.6f, 1.0f};
+            float shipDiffuse[]  = {0.6f, 0.6f, 0.6f, 1.0f};
 
             // set the material properties for the sun using OpenGL
-            GL11.glMaterialf(GL11.GL_FRONT, GL11.GL_SHININESS, shipFrontShininess);
-            GL11.glMaterial(GL11.GL_FRONT, GL11.GL_SPECULAR, FloatBuffer.wrap(shipFrontSpecular));
-            GL11.glMaterial(GL11.GL_FRONT, GL11.GL_DIFFUSE, FloatBuffer.wrap(shipFrontDiffuse));
+            GL11.glMaterialf(GL11.GL_FRONT, GL11.GL_SHININESS, shipShininess);
+            GL11.glMaterial(GL11.GL_FRONT, GL11.GL_SPECULAR, FloatBuffer.wrap(shipSpecular));
+            GL11.glMaterial(GL11.GL_FRONT, GL11.GL_DIFFUSE, FloatBuffer.wrap(shipDiffuse));
             
 
             // enable texturing and bind an appropriate texture
             GL11.glEnable(GL11.GL_TEXTURE_2D);
             GL11.glBindTexture(GL11.GL_TEXTURE_2D,shipTexture.getTextureID());
         	
-            // position, scale and draw the ground plane using its display list
+            // position, scale and draw the spaceship
             GL11.glTranslatef(shipPos.getX(), shipPos.getY(), shipPos.getZ());
             GL11.glRotatef(shipPos.getRY() + -90, 0, 1, 0);
-            //GL11.glRotatef(currentShipAngle, 0, 0, 1);
             GL11.glScalef(0.0625f, 0.0625f, 0.0625f);
-            
             
             drawUnitSpaceship();
             
@@ -687,12 +703,15 @@ public class CS2150Coursework extends GraphicsLab
         GL11.glPopMatrix();
     }
     
+    /**
+     * Draw the earth (or earth like planet)
+     */
     protected void drawEarth()
     {
         // draw the earth
         GL11.glPushMatrix();
         {
-           float earthShininess  = 2.0f;
+           float earthShininess  = 8.0f;
            float earthSpecular[] = {0.8f, 0.8f, 0.8f, 1.0f};
            float earthDiffuse[]  = {0.6f, 0.6f, 0.6f, 1.0f};
 
@@ -715,18 +734,21 @@ public class CS2150Coursework extends GraphicsLab
            GL11.glTexGeni(GL11.GL_S, GL11.GL_TEXTURE_GEN_MODE, GL11.GL_SPHERE_MAP);           
            GL11.glTexGeni(GL11.GL_T, GL11.GL_TEXTURE_GEN_MODE, GL11.GL_SPHERE_MAP);
                    	
-           // position and draw the moon using a sphere quadric object
+           // position and draw the spaceship
            new Sphere().draw(1.5f,50,50);
         }
         GL11.glPopMatrix();
     }
     
+    /**
+     * Draws an alien planet
+     */
     protected void drawAlienPlanet()
     {
-        // draw the earth
+        // draw the alien planet
         GL11.glPushMatrix();
         {
-           float alienPlanetShininess  = 2.0f;
+           float alienPlanetShininess  = 3.0f;
            float alienPlanetSpecular[] = {0.6f, 0.6f, 0.6f, 1.0f};
            float alienPlanetDiffuse[]  = {0.6f, 0.6f, 0.6f, 1.0f};
 
@@ -749,15 +771,18 @@ public class CS2150Coursework extends GraphicsLab
            GL11.glTexGeni(GL11.GL_S, GL11.GL_TEXTURE_GEN_MODE, GL11.GL_SPHERE_MAP);           
            GL11.glTexGeni(GL11.GL_T, GL11.GL_TEXTURE_GEN_MODE, GL11.GL_SPHERE_MAP);
                    	
-           // position and draw the moon using a sphere quadric object
+           // position and draw the alien planet
            new Sphere().draw(1.0f,50,50);
         }
         GL11.glPopMatrix();
     }
     
+    /**
+     *  Draws an alien planet 2
+     */
     protected void drawAlienPlanet2()
     {
-        // draw the earth
+        // draw the second alien planet
         GL11.glPushMatrix();
         {
            float alienPlanet2Shininess  = 1.0f;
@@ -783,13 +808,15 @@ public class CS2150Coursework extends GraphicsLab
            GL11.glTexGeni(GL11.GL_S, GL11.GL_TEXTURE_GEN_MODE, GL11.GL_SPHERE_MAP);           
            GL11.glTexGeni(GL11.GL_T, GL11.GL_TEXTURE_GEN_MODE, GL11.GL_SPHERE_MAP);
                    	
-           // position and draw the moon using a sphere quadric object
+           // position and draw the second alien planet
            new Sphere().draw(0.75f,50,50);
         }
         GL11.glPopMatrix();
     }
     
-    /** Draw a Spaceship **/
+    /**
+     * Information for drawing a spaceship
+     */
     protected void drawUnitSpaceship()
     {    	
     	// -------------- Nose ----------------
