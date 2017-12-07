@@ -66,7 +66,7 @@ public class CS2150Coursework extends GraphicsLab
 	private float noseThickness = 0.125f;
 	
 	private float shipSpeedSlow = 1.0f;
-	private float shipSpeedFast = 3.0f;
+	private float shipSpeedFast = 5.0f;
 	private float shipSpeed = 1.0f;
 	
 	private float skyboxSize = 70.0f;
@@ -293,6 +293,7 @@ public class CS2150Coursework extends GraphicsLab
         
         drawShip();
     }
+    
     protected void setSceneCamera()
     {
         // call the default behaviour defined in GraphicsLab. This will set a default perspective projection
