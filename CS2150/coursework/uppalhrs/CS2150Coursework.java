@@ -16,7 +16,13 @@
  *  |			|
  *  |			+-- [T(5,0,0) Ry(360*currentSateliteRotation*0.5)] orbiting Spaceship
  *  |
- *  +-- [T(20,0,15)] Spaceship
+ *  +-- [T(-180,0,0)] Sun 2
+ *  |   |
+ *  |   +-- [T(-20,0,0) Ry(360*currentSateliteRotation/150)] Alien Planet
+ *  |	|
+ *  |	+-- [T(-5,0,0) Ry(360*currentSateliteRotation/10)] Alien Planet
+ *  |
+ *  +-- [T(20,0,15) Ry(0,0,0) S(0.0625, 0.0625, 0.0625)] Spaceship
  *  
  *  TODO: Provide a scene graph for your submission
  */
@@ -30,7 +36,7 @@ import org.newdawn.slick.opengl.Texture;
 import GraphicsLab.*;
 
 /**
- *  A spaceship in a Star System with a ship orbiting the moon
+ *  A spaceship in a Star System with a ship orbiting the moon, and another star system that can be travelled to
  *  
  *  
  *
@@ -43,6 +49,8 @@ import GraphicsLab.*;
  * <li> Use 'W D' to move the ship forward and backwards respectively
  * <li> Use 'Q' and 'E' to go up and down respectively
  * <li> Use 'A' and 'D' to rotate ship left and right respectively
+ * <li> Use 'F' and either '1' or '2' to a different movement speeds (1 for slow, 2 for fast)
+ * <li> Use 'J' and either '1' or '2' to a different star system location
  * <li> Use 'Space' to stop the ship and 'R' to reset to default location
  * </ul>
  *
@@ -57,8 +65,9 @@ public class CS2150Coursework extends GraphicsLab
 	private float noseLength = 1.5f;
 	private float noseThickness = 0.125f;
 	
-	private final int spaceshipList = 1;
-	private final int moonList = 2;
+	private float shipSpeedSlow = 1.0f;
+	private float shipSpeedFast = 3.0f;
+	private float shipSpeed = 1.0f;
 	
 	private float skyboxSize = 70.0f;
 	
@@ -76,8 +85,7 @@ public class CS2150Coursework extends GraphicsLab
 	
 	//SHIP
 	// ships postion information
-	private Vector3 startingPos = new Vector3(20.0f, 0.0f, 15.0f, 0.0f, 0.0f, 0.0f);
-	private Vector3 shipPos = startingPos;
+	private Vector3 shipPos = new Vector3(20.0f, 0.0f, 15.0f, 0.0f, 0.0f, 0.0f);
 	
 	
 	// CAMERA
@@ -89,10 +97,18 @@ public class CS2150Coursework extends GraphicsLab
 	private Vector3 cameraPos = new Vector3(shipPos.getX() + cameraDistance, shipPos.getY() + cameraHeight, shipPos.getZ(), shipPos.getX(), shipPos.getY(), shipPos.getZ());
 	
 	
+	//WARPJUMP
+	private Vector3 System1JumpPoint = new Vector3(-150.0f, 0.0f, 15.0f, 0.0f, 0.0f, 0.0f);
+	private Vector3 System0JumpPoint = new Vector3(shipPos.getX(), shipPos.getY(), shipPos.getZ(), shipPos.getRX(), shipPos.getRY(), shipPos.getRZ());
+	private boolean inSystem1 = false;
+	
+	
 	// Textures
     private Texture moonTex;
     private Texture sunTex;
-    private Texture planet2Tex;
+    private Texture EarthTex;
+    private Texture alienTex;
+    private Texture alien2Tex;
     private Texture shipTexture;
     private Texture skyboxTex;
 	
@@ -111,19 +127,21 @@ public class CS2150Coursework extends GraphicsLab
     
     	moonTex = loadTexture("coursework/uppalhrs/textures/moon.png");
     	sunTex = loadTexture("coursework/uppalhrs/textures/sun.png");
-    	planet2Tex = loadTexture("coursework/uppalhrs/textures/earth.png");
+    	EarthTex = loadTexture("coursework/uppalhrs/textures/earth.png");
     	shipTexture = loadTexture("coursework/uppalhrs/textures/shipHull.png");
     	skyboxTex = loadTexture("coursework/uppalhrs/textures/skybox.png");
+    	alienTex = loadTexture("coursework/uppalhrs/textures/alienPlanet.png");
+    	alien2Tex = loadTexture("coursework/uppalhrs/textures/alienPlanet2.png");
     	
     	// Global Ambient Light
 	    float globalAmbient[]   = {0.2f,  0.2f,  0.2f, 1.0f}; 
-	    GL11.glLightModel(GL11.GL_LIGHT_MODEL_AMBIENT,FloatBuffer.wrap(globalAmbient));    // Set global ambient lighting
+	    GL11.glLightModel(GL11.GL_LIGHT_MODEL_AMBIENT,FloatBuffer.wrap(globalAmbient));
 	    
         // Sun light yellowish
         float diffuse0[]  = { 0.8f,  0.7f, 0.4f, 1.0f};
-        // ...with a very dim ambient contribution...
+        // with a very dim ambient contribution
         float ambient0[]  = { 0.05f,  0.05f, 0.05f, 1.0f};
-        // ...and is positioned to the left the viewpoint
+        // and is positioned at the center of the scene
         float position0[] = { 0.0f, 0.0f, 0.0f, 1.0f};
 
         // supply OpenGL with the properties for the first light
@@ -132,7 +150,7 @@ public class CS2150Coursework extends GraphicsLab
         GL11.glLight(GL11.GL_LIGHT0, GL11.GL_SPECULAR, FloatBuffer.wrap(diffuse0));
         GL11.glLight(GL11.GL_LIGHT0, GL11.GL_POSITION, FloatBuffer.wrap(position0));
         
-        // enable the first light
+        // enable the sun light
         GL11.glEnable(GL11.GL_LIGHT0);
 	    
 
@@ -175,13 +193,36 @@ public class CS2150Coursework extends GraphicsLab
         	direction = Direction.STOP;
         	direction = Direction.DOWN;
         }
+        // Speed controls
+        else if(Keyboard.isKeyDown(Keyboard.KEY_F) && Keyboard.isKeyDown(Keyboard.KEY_1))
+        {   
+        	shipSpeed = shipSpeedSlow;
+        }
+        else if(Keyboard.isKeyDown(Keyboard.KEY_F) && Keyboard.isKeyDown(Keyboard.KEY_2))
+        {   
+        	shipSpeed = shipSpeedFast;
+        }
         else if(Keyboard.isKeyDown(Keyboard.KEY_SPACE))
         {   
         	direction = Direction.STOP;
         }
         else if(Keyboard.isKeyDown(Keyboard.KEY_R))
         {   
-        	shipPos = startingPos;
+        	shipPos.resetPosition();
+        	direction = Direction.STOP;
+        }
+        else if(Keyboard.isKeyDown(Keyboard.KEY_J) && Keyboard.isKeyDown(Keyboard.KEY_1) && !inSystem1)
+        {   
+        	shipPos.setY(0.0f);
+        	shipPos.setPosition(System1JumpPoint);
+        	inSystem1 = true;
+        	direction = Direction.STOP;
+        }
+        else if(Keyboard.isKeyDown(Keyboard.KEY_J) && Keyboard.isKeyDown(Keyboard.KEY_2) && inSystem1)
+        {   	
+    		shipPos.setY(180.0f);
+        	shipPos.setPosition(System0JumpPoint);
+        	inSystem1 = false;
         	direction = Direction.STOP;
         }
         
@@ -196,31 +237,31 @@ public class CS2150Coursework extends GraphicsLab
     	// move ship depending on what direction is selected
         if(direction == Direction.FORWARDS)
         {
-        	moveShip(1.0f);
+        	moveShip(shipSpeed);
         }
         else if(direction == Direction.BACKWARDS)
         {   
-        	moveShip(-1.0f);
+        	moveShip(-shipSpeed);
         }
         else if(direction == Direction.UP)
         {   
         	// Move ship in y-axis
-        	shipPos.setY(shipPos.getY() + 1.0f * getAnimationScale());
+        	shipPos.setY(shipPos.getY() + shipSpeed * getAnimationScale());
         }
         else if(direction == Direction.DOWN)
         {   
         	// Move ship in y-axis
-        	shipPos.setY(shipPos.getY() - 1.0f * getAnimationScale());
+        	shipPos.setY(shipPos.getY() - shipSpeed * getAnimationScale());
         }
         else if(direction == Direction.YAWLEFT)
         {   
         	// Rotate ship in y-axis
-        	shipPos.setRY(shipPos.getRY() + 5.0f * getAnimationScale());
+        	shipPos.setRY(shipPos.getRY() + (5.0f * shipSpeed) * getAnimationScale());
         }
         else if(direction == Direction.YAWRIGHT)
         {   
         	// Rotate ship in y-axis
-        	shipPos.setRY(shipPos.getRY() - 5.0f * getAnimationScale());
+        	shipPos.setRY(shipPos.getRY() - (5.0f * shipSpeed) * getAnimationScale());
         }
         
     	// ensures rotation is kept within 360 degrees
@@ -233,8 +274,10 @@ public class CS2150Coursework extends GraphicsLab
     		shipPos.setRY(360.0f);
     	}
     	
+    	// Updates cameras position relative to the ship
         updateCameraPos();
         
+        // move the planets
         currentSateliteRotation += 1.0f * getAnimationScale();
         
     }
@@ -244,7 +287,9 @@ public class CS2150Coursework extends GraphicsLab
     	
     	drawSkybox();
     	
-    	drawSolarSystem();
+    	drawStarSystem0();
+    	
+    	drawStarSystem1();
         
         drawShip();
     }
@@ -265,8 +310,9 @@ public class CS2150Coursework extends GraphicsLab
     	
     }
     
-    /*
+    /**
      * Will move ship depending on which way it is facing
+     * @param shipMoveDistance Distance to move the ship
      */
     protected void moveShip(float shipMoveDistance)
     {
@@ -283,9 +329,11 @@ public class CS2150Coursework extends GraphicsLab
     	 * 	   (135) 	    (180')		(225)
     	 */
     	
+    	// Ships current rotation
     	float shipR = shipPos.getRY();
     	
-    	int times45 = (int) Math.floor((shipR / 45)); // works out how many 45 go into current rotation
+    	// used for ratio calculations - returns the lowest rounded number of 45 degree turns in the ships current Y rotation
+    	int times45 = (int) Math.floor((shipR / 45));
     	
     	float shipNewX = 0.0f;
     	float shipNewZ = 0.0f;
@@ -337,12 +385,17 @@ public class CS2150Coursework extends GraphicsLab
     	shipPos.setZ((shipPos.getZ() + shipNewZ * getAnimationScale() ));
     }
     
+    /**
+     * Will update camera position depending on the locations and rotation of the spaceship
+     */
     protected void updateCameraPos()
     {
     	
+    	// Ships current rotation
     	float shipR = shipPos.getRY();
     	
-    	int times45 = (int) Math.floor((shipR / 45)); // works out how many 45 go into current rotation
+    	// used for ratio calculations - returns the lowest rounded number of 45 degree turns in the ships current Y rotation
+    	int times45 = (int) Math.floor((shipR / 45));
     	
     	float cameraNewX = 0.0f;
     	float cameraNewZ = 0.0f;
@@ -474,12 +527,12 @@ public class CS2150Coursework extends GraphicsLab
         GL11.glPopMatrix();
     }
     
-    protected void drawSolarSystem()
+    protected void drawStarSystem0()
     {
         // draw the Sun
         GL11.glPushMatrix();
         {
-           // diffuse reflection of the front faces of the sun
+           // diffuse reflection of faces of the sun
            float sunDiffuse[]  = {0.6f, 0.6f, 0.6f, 1.0f};
            
            float sunEmmision[]  = { 0.8f,  0.7f, 0.4f, 1.0f };
@@ -535,6 +588,67 @@ public class CS2150Coursework extends GraphicsLab
         GL11.glPopMatrix();
     }
     
+    protected void drawStarSystem1()
+    {
+    	GL11.glPushMatrix();
+    	{
+    		// draw the Sun
+            GL11.glPushMatrix();
+            {
+               // diffuse reflection of the front faces of the sun
+                float sunDiffuse[]  = {0.6f, 0.6f, 0.6f, 1.0f};
+                
+                float sunEmmision[]  = { 0.8f,  0.7f, 0.4f, 1.0f };
+                float sunResetEmmision[]  = { 0.0f,  0.0f, 0.0f, 1.0f };
+
+               // set the material properties for the sun using OpenGL
+               GL11.glMaterial(GL11.GL_FRONT, GL11.GL_EMISSION, FloatBuffer.wrap(sunEmmision));
+               GL11.glMaterial(GL11.GL_FRONT, GL11.GL_DIFFUSE, FloatBuffer.wrap(sunDiffuse));
+
+               // Enable Textures
+               GL11.glEnable(GL11.GL_TEXTURE_2D);
+               GL11.glBindTexture(GL11.GL_TEXTURE_2D,sunTex.getTextureID());
+               GL11.glBindTexture(GL11.GL_TEXTURE_HEIGHT,sunTex.getTextureID());
+
+               // enable the texture space S,T
+               GL11.glEnable(GL11.GL_TEXTURE_GEN_S); 
+               GL11.glEnable(GL11.GL_TEXTURE_GEN_T);            
+               GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST);
+               GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST);
+               
+               // Set The Texture Generation Mode For S To Sphere Mapping 
+               GL11.glTexGeni(GL11.GL_S, GL11.GL_TEXTURE_GEN_MODE, GL11.GL_SPHERE_MAP);           
+               GL11.glTexGeni(GL11.GL_T, GL11.GL_TEXTURE_GEN_MODE, GL11.GL_SPHERE_MAP);
+                       	
+               // position and draw the moon using a sphere quadric object
+               GL11.glTranslatef(-180f, 0f, 0f);
+               new Sphere().draw(2.0f,50,50);
+               GL11.glMaterial(GL11.GL_FRONT, GL11.GL_EMISSION, FloatBuffer.wrap(sunResetEmmision));
+               
+               GL11.glPushMatrix();
+               {
+                   // rotate the Alien Planet around the Sun
+                   GL11.glRotatef((360.0f*currentSateliteRotation/150.0f),0.0f,1.0f,0.0f);
+                   // the planet is -20 units from the Sun
+                   GL11.glTranslatef(-20.0f,0.0f,0.0f);
+                   // draw the planet
+                   drawAlienPlanet();
+               }
+               GL11.glPopMatrix();
+               
+               // rotate the Alien Planet 2 around the Sun
+               GL11.glRotatef((360.0f*currentSateliteRotation/10.0f),0.0f,1.0f,0.0f);
+               // the planet is -5 units from the Sun
+               GL11.glTranslatef(-5.0f,0.0f,0.0f);
+               // draw the planet
+               drawAlienPlanet2(); 
+ 
+            }
+            GL11.glPopMatrix();
+    	}
+    	GL11.glPopMatrix();
+    }
+    
     protected void drawShip()
     {
     	// draw the space ship
@@ -576,18 +690,18 @@ public class CS2150Coursework extends GraphicsLab
         // draw the earth
         GL11.glPushMatrix();
         {
-           float planet2FrontShininess  = 2.0f;
-           float planet2FrontSpecular[] = {0.6f, 0.6f, 0.6f, 1.0f};
-           float planet2FrontDiffuse[]  = {0.6f, 0.6f, 0.6f, 1.0f};
+           float earthShininess  = 2.0f;
+           float earthSpecular[] = {0.8f, 0.8f, 0.8f, 1.0f};
+           float earthDiffuse[]  = {0.6f, 0.6f, 0.6f, 1.0f};
 
            // set the material properties for the planet
-           GL11.glMaterialf(GL11.GL_FRONT, GL11.GL_SHININESS, planet2FrontShininess);
-           GL11.glMaterial(GL11.GL_FRONT, GL11.GL_SPECULAR, FloatBuffer.wrap(planet2FrontSpecular));
-           GL11.glMaterial(GL11.GL_FRONT, GL11.GL_DIFFUSE, FloatBuffer.wrap(planet2FrontDiffuse));
+           GL11.glMaterialf(GL11.GL_FRONT, GL11.GL_SHININESS, earthShininess);
+           GL11.glMaterial(GL11.GL_FRONT, GL11.GL_SPECULAR, FloatBuffer.wrap(earthSpecular));
+           GL11.glMaterial(GL11.GL_FRONT, GL11.GL_DIFFUSE, FloatBuffer.wrap(earthDiffuse));
 
            // Enable Textures
            GL11.glEnable(GL11.GL_TEXTURE_2D);
-           GL11.glBindTexture(GL11.GL_TEXTURE_2D,planet2Tex.getTextureID());
+           GL11.glBindTexture(GL11.GL_TEXTURE_2D,EarthTex.getTextureID());
 
            // enable the texture space S,T
            GL11.glEnable(GL11.GL_TEXTURE_GEN_S); 
@@ -601,6 +715,74 @@ public class CS2150Coursework extends GraphicsLab
                    	
            // position and draw the moon using a sphere quadric object
            new Sphere().draw(1.5f,50,50);
+        }
+        GL11.glPopMatrix();
+    }
+    
+    protected void drawAlienPlanet()
+    {
+        // draw the earth
+        GL11.glPushMatrix();
+        {
+           float alienPlanetShininess  = 2.0f;
+           float alienPlanetSpecular[] = {0.6f, 0.6f, 0.6f, 1.0f};
+           float alienPlanetDiffuse[]  = {0.6f, 0.6f, 0.6f, 1.0f};
+
+           // set the material properties for the planet
+           GL11.glMaterialf(GL11.GL_FRONT, GL11.GL_SHININESS, alienPlanetShininess);
+           GL11.glMaterial(GL11.GL_FRONT, GL11.GL_SPECULAR, FloatBuffer.wrap(alienPlanetSpecular));
+           GL11.glMaterial(GL11.GL_FRONT, GL11.GL_DIFFUSE, FloatBuffer.wrap(alienPlanetDiffuse));
+
+           // Enable Textures
+           GL11.glEnable(GL11.GL_TEXTURE_2D);
+           GL11.glBindTexture(GL11.GL_TEXTURE_2D,alienTex.getTextureID());
+
+           // enable the texture space S,T
+           GL11.glEnable(GL11.GL_TEXTURE_GEN_S); 
+           GL11.glEnable(GL11.GL_TEXTURE_GEN_T);            
+           GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST);
+           GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST);
+           
+           // Set The Texture Generation Mode For S To Sphere Mapping 
+           GL11.glTexGeni(GL11.GL_S, GL11.GL_TEXTURE_GEN_MODE, GL11.GL_SPHERE_MAP);           
+           GL11.glTexGeni(GL11.GL_T, GL11.GL_TEXTURE_GEN_MODE, GL11.GL_SPHERE_MAP);
+                   	
+           // position and draw the moon using a sphere quadric object
+           new Sphere().draw(1.0f,50,50);
+        }
+        GL11.glPopMatrix();
+    }
+    
+    protected void drawAlienPlanet2()
+    {
+        // draw the earth
+        GL11.glPushMatrix();
+        {
+           float alienPlanet2Shininess  = 1.0f;
+           float alienPlanet2Specular[] = {0.6f, 0.6f, 0.6f, 1.0f};
+           float alienPlanet2Diffuse[]  = {0.6f, 0.6f, 0.6f, 1.0f};
+
+           // set the material properties for the planet
+           GL11.glMaterialf(GL11.GL_FRONT, GL11.GL_SHININESS, alienPlanet2Shininess);
+           GL11.glMaterial(GL11.GL_FRONT, GL11.GL_SPECULAR, FloatBuffer.wrap(alienPlanet2Specular));
+           GL11.glMaterial(GL11.GL_FRONT, GL11.GL_DIFFUSE, FloatBuffer.wrap(alienPlanet2Diffuse));
+
+           // Enable Textures
+           GL11.glEnable(GL11.GL_TEXTURE_2D);
+           GL11.glBindTexture(GL11.GL_TEXTURE_2D,alien2Tex.getTextureID());
+
+           // enable the texture space S,T
+           GL11.glEnable(GL11.GL_TEXTURE_GEN_S); 
+           GL11.glEnable(GL11.GL_TEXTURE_GEN_T);            
+           GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST);
+           GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST);
+           
+           // Set The Texture Generation Mode For S To Sphere Mapping 
+           GL11.glTexGeni(GL11.GL_S, GL11.GL_TEXTURE_GEN_MODE, GL11.GL_SPHERE_MAP);           
+           GL11.glTexGeni(GL11.GL_T, GL11.GL_TEXTURE_GEN_MODE, GL11.GL_SPHERE_MAP);
+                   	
+           // position and draw the moon using a sphere quadric object
+           new Sphere().draw(0.75f,50,50);
         }
         GL11.glPopMatrix();
     }
