@@ -46,6 +46,7 @@ import GraphicsLab.*;
  * <li>Hold the x, y and z keys to view the scene along the x, y and z axis, respectively
  * <li>While viewing the scene along the x, y or z axis, use the up and down cursor keys
  *      to increase or decrease the viewpoint's distance from the scene origin
+ *      
  * <li> Use 'W D' to move the ship forward and backwards respectively
  * <li> Use 'Q' and 'E' to go up and down respectively
  * <li> Use 'A' and 'D' to rotate ship left and right respectively
