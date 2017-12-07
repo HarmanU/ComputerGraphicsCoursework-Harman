@@ -8,7 +8,16 @@
  * Scene Graph:
  *  Scene origin
  *  |
- *
+ *  +-- [] Sun
+ *  |   |
+ *  |   +-- [T(5,0,0) Ry(360*currentSateliteRotation/365)] Earth
+ *  |       |
+ *  |       +-- [T(5,0,0) Ry(360*currentSateliteRotation*0.5)] Moon
+ *  |			|
+ *  |			+-- [T(5,0,0) Ry(360*currentSateliteRotation*0.5)] orbiting Spaceship
+ *  |
+ *  +-- [T(20,0,15)] Spaceship
+ *  
  *  TODO: Provide a scene graph for your submission
  */
 package coursework.uppalhrs;
@@ -17,13 +26,13 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.glu.GLU;
 import org.lwjgl.util.glu.Sphere;
 import org.lwjgl.input.Keyboard;
-import org.newdawn.slick.Font;
-import org.newdawn.slick.TrueTypeFont;
 import org.newdawn.slick.opengl.Texture;
 import GraphicsLab.*;
 
 /**
- *  A spaceship orbiting a moon
+ *  A spaceship in a Star System with a ship orbiting the moon
+ *  
+ *  
  *
  * <p>Controls:
  * <ul>
