@@ -4,6 +4,8 @@
  * Full name: Harman Ryan Singh Uppal
  * Email: uppalhrs@aston.ac.uk
  * Student ID: 159115729
+ * 
+ * TEXTURE REFERENCES: All textures were made by me (Harman Uppal)
  *
  * Scene Graph:
  *  Scene origin
@@ -55,6 +57,7 @@ import GraphicsLab.*;
  * <li> Hold 'F' and either '1' or '2' for different movement speeds (1 for slow, 2 for fast)
  * <li> Hold 'J' and either '1' or '2' to jump to a different star system (1 for alien system, 2 for home system)
  * <li> Use 'Space' to stop the ship and 'R' to reset to default location
+ * <li> IF SHIP IS TOO UN-CONTROLABLE THEN YOU CAN USE SPACE TO STOP AFTER EVERY ACTION TO HELP
  * </ul>
  *
  */
