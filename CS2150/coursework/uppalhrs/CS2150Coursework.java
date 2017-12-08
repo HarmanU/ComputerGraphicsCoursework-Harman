@@ -1155,7 +1155,7 @@ public class CS2150Coursework extends GraphicsLab
 		}
 		GL11.glEnd();
 		
-		// Wing to body Joint left
+		// Wing to body Joint right
 		GL11.glBegin(GL11.GL_POLYGON);
 		{
 			new Normal(v8.toVector(),v26.toVector(),v32.toVector(),v10.toVector()).submit();
