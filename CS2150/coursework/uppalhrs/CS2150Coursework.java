@@ -1203,7 +1203,7 @@ public class CS2150Coursework extends GraphicsLab
 		}
 		GL11.glEnd();
 		
-		// Engine left
+		// Engine right
 		GL11.glBegin(GL11.GL_POLYGON);
 		{
 			new Normal(v34.toVector(),v38.toVector(),v39.toVector(),v35.toVector()).submit();
